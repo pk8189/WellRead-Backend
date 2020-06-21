@@ -14,6 +14,9 @@ class Workspace(BaseModel):
 class Club(BaseModel):
     workspace: Workspace
 
+    class Config:
+        orm_mode = True
+
 
 class User(BaseModel):
     email: str
