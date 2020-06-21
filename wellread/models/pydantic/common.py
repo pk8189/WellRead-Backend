@@ -4,32 +4,17 @@ from typing import List
 from pydantic import BaseModel
 
 
-class Workspace(BaseModel):
-    created: datetime
-
-    class Config:
-        orm_mode = True
-
-
-class Club(BaseModel):
-    workspace: Workspace
-
-    class Config:
-        orm_mode = True
-
-
 class User(BaseModel):
-    email: str
-    clubs: List[Club]
+    name: str
+    email: str = None
 
     class Config:
         orm_mode = True
 
 
 class Tag(BaseModel):
-    _id: str
     name: str
-    club: Club
+    club_id: str
     created_by: User
 
     class Config:
@@ -37,9 +22,8 @@ class Tag(BaseModel):
 
 
 class Note(BaseModel):
-    _id: str
     ts: datetime
-    club: Club
+    club_id: str
     tags: List[Tag]
     created_by: User
 

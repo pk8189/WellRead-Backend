@@ -7,8 +7,6 @@ from wellread.models.pydantic import common
 
 
 class SlackWorkspace(BaseModel):
-    _id: str
-    workspace: common.Workspace
     slack_app_id: str
     bot_id: str
 
@@ -17,9 +15,7 @@ class SlackWorkspace(BaseModel):
 
 
 class SlackClub(BaseModel):
-    _id: str
     slack_workspace: SlackWorkspace
-    club: common.Club
     channel_id: str
     book_title: str
     intro_message_ts: int
