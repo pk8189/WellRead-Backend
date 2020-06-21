@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+# Git pre-commit hook to check staged Python files for formatting issues with
+# isort and black.
+#
+# This requires that isort and black are installed and runnable in the environment running
+# the pre-commit hook.
+#
+# When running, this first checks for unstaged changes to staged files, and if
+# there are any, it will exit with an error. Files with unstaged changes will be
+# printed.
+#
+# If all staged files have no unstaged changes, it will run black against them,
+# leaving the formatting changes unstaged. Changed files will be printed.
+#
+# BUGS: This does not leave staged changes alone when used with the -a flag to
+# git commit, due to the fact that git stages ALL unstaged files when that flag
+# is used.
+#
+# Note that we don't enclose $PYTHON_FILES in double quotes as this caused problems
+# with newline chars from the original diff. This works for most files but would fail
+# if you have files that contain spaces in the names.
+# Find all staged Python files, and exit early if there aren't any.
+
+PYTHON_FILES=$(git diff --name-only --cached --diff-filter=AM | grep --color=never '\.py$')
+if [ -z "${PYTHON_FILES[@]}"  ]; then
+  exit 0
+fi
+
+# If anything goes wrong exit with status 1 so git won't commit
+# Put this after line above in case grep can't find any files (it exits with 1 if it can't)
+trap "echo 'Something went wrong with Black hook, commit failed.'; exit 1" ERR
+
+# Verify that isort is installed; if not, warn and exit.
+if ! command -v isort >/dev/null; then
+      echo 'isort not on path; cannot sort imports. Please install isort:'
+      echo '    pip install isort'
+      exit 2
+ fi
+# Verify that black is installed; if not, warn and exit.
+if ! command -v black >/dev/null; then
+      echo 'black not on path; cannot format. Please install black:'
+      echo '    pip install black'
+      exit 2
+ fi
+
+# Check for unstaged changes to files in the index.
+CHANGED_FILES=$(git diff --name-only -- ${PYTHON_FILES})
+if [ -n "${CHANGED_FILES}"  ]; then
+      echo 'You have unstaged changes to some files in your commit; skipping '
+      echo 'auto-format. Please stage, stash, or revert these changes. You may '
+      echo 'find `git stash -k` helpful here.'
+      echo 'Files with unstaged changes:' "${CHANGED_FILES[@]}"
+      exit 1
+ fi
+
+# Sort imports in all staged changes
+echo 'Sorting imports in staged Python files . . .'
+isort ${PYTHON_FILES}
+
+# Format all staged files, then exit with an error code if any have uncommitted
+# changes.
+echo 'Formatting staged Python files . . .'
+
+# Remove unused imports and variables
+autoflake --in-place --remove-all-unused-imports --remove-unused-variables ${PYTHON_FILES}
+
+# Black the files!
+black ${PYTHON_FILES}
+
+CHANGED_FILES=$(git diff --name-only -- ${PYTHON_FILES})
+if [ -n "${CHANGED_FILES}"  ]; then
+      echo 'Reformatted staged files. Automatically adding them to the commit. In Black we trust...'
+      echo 'Files updated: ' "${CHANGED_FILES[@]}"
+      git add "${CHANGED_FILES}"
+fi
