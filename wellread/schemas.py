@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
@@ -14,11 +14,32 @@ class TeamCreate(TeamBase):
     pass
 
 
-class Team(TeamBase):
-    team_id: str
+class TeamDelete(TeamBase):
+    pass
+
+
+class UserBase(BaseModel):
+    slack_id_team_id: str
+    email: str
     name: str
-    domain: str
-    email_domain: str
+    is_app_user: bool
+    is_owner: bool
+    locale: str
+    profile_image_original: str
+
+
+class UserCreate(UserBase):
+    team_id: str
+
+
+class User(UserBase):
+    class Config:
+        orm_mode = True
+
+
+class Team(TeamBase):
+
+    users: List[User] = []
 
     class Config:
         orm_mode = True

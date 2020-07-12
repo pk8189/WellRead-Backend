@@ -1,4 +1,5 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table, Time
+from sqlalchemy.orm import relationship
 
 from wellread.database import Base
 
@@ -8,20 +9,27 @@ class SlackTeam(Base):
 
     team_id = Column(String, primary_key=True, index=True)  # team_id from slack API
     name = Column(String)  # team name from slack API team object
-    domain = Column(String)  # domain from slack API team object
-    email_domain = Column(String)  # email from slack API team object
+    domain = Column(String, nullable=True)  # domain from slack API team object
+    email_domain = Column(String, nullable=True)  # email from slack API team object
+
+    slack_users = relationship("SlackUser", back_populates="slack_team")
 
 
-# class SlackUser(Base):
-#     __tablename__ = "slack_users"
+class SlackUser(Base):
+    __tablename__ = "slack_users"
 
-#     slack_id = Column(String, primary_key=True, index=True) # user_id + team_id from slack API
-#     email = Column(String) # email from slack API user object
-#     name = Column(String) # full name given in user object of slack API
-#     is_app_user = Column(Boolean) # user is authorized to call our app
-#     is_owner = Column(Boolean) # user is an owner of the current workspace
-#     locale = Column(String) # chosen IETF language code for user
-#     profile_image_original = Column(String) # profile image URL
+    slack_id_team_id = Column(
+        String, primary_key=True, index=True
+    )  # user_id_team_id from slack API
+    email = Column(String)  # email from slack API user object
+    name = Column(String)  # full name given in user object of slack API
+    is_app_user = Column(Boolean)  # user is authorized to call our app
+    is_owner = Column(Boolean)  # user is an owner of the current workspace
+    locale = Column(String)  # chosen IETF language code for user
+    profile_image_original = Column(String)  # profile image URL
+
+    team_id = Column(String, ForeignKey("slack_teams.team_id"))
+    slack_team = relationship("SlackTeam", back_populates="slack_users")
 
 
 # slack_club = relationship(

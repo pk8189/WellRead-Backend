@@ -1,1 +1,8 @@
 wellread.egg-info/
+
+# non production database
+sql_app.db
+
+# pytest database
+test.db
+
