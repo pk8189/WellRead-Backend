@@ -1,10 +1,23 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table, Time
+import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
 
-from wellread.database import Base
+from wellread.database import Base, WellReadBase
+
+slack_club_slack_user_table = Table(
+    "slack_club_slack_user",
+    Base.metadata,
+    Column(
+        "slack_user_slack_id_team_id",
+        String,
+        ForeignKey("slack_users.slack_id_team_id"),
+    ),
+    Column("slack_club_id", String, ForeignKey("slack_clubs.id")),
+)
 
 
-class SlackTeam(Base):
+class SlackTeam(Base, WellReadBase):
     __tablename__ = "slack_teams"
 
     team_id = Column(String, primary_key=True, index=True)  # team_id from slack API
@@ -15,7 +28,7 @@ class SlackTeam(Base):
     slack_users = relationship("SlackUser", back_populates="slack_team")
 
 
-class SlackUser(Base):
+class SlackUser(Base, WellReadBase):
     __tablename__ = "slack_users"
 
     slack_id_team_id = Column(
@@ -28,43 +41,31 @@ class SlackUser(Base):
     locale = Column(String)  # chosen IETF language code for user
     profile_image_original = Column(String)  # profile image URL
 
-    team_id = Column(String, ForeignKey("slack_teams.team_id"))
+    team_id = Column(String, ForeignKey("slack_teams.team_id"), nullable=False)
     slack_team = relationship("SlackTeam", back_populates="slack_users")
+    slack_clubs = relationship(
+        "SlackClub", secondary=slack_club_slack_user_table, back_populates="slack_users"
+    )
 
 
-# slack_club = relationship(
-#     "SlackClub",
-#     secondary=slack_club_slack_user_table,
-#     back_populates="slack_users"
-# )
+class SlackClub(Base, WellReadBase):
+    __tablename__ = "slack_clubs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    book_title = Column(String)
+    channel_id = Column(String)
+    create_date = Column(DateTime, default=datetime.datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+
+    next_meeting = Column(DateTime, nullable=True)
+
+    admin_user_id = Column(String, ForeignKey("slack_users.slack_id_team_id"))
+    slack_users = relationship(
+        "SlackUser", secondary=slack_club_slack_user_table, back_populates="slack_clubs"
+    )
 
 
-# slack_club_slack_user_table = Table("slack_club_slack_user", Base.metadata,
-#     Column("slack_club_id", Integer, ForeignKey("slack_clubs.id")),
-#     Column("slack_user_id", Integer, ForeignKey("slack_users.id"))
-# )
-
-
-# class SlackClub(Base):
-#     __tablename__ = "slack_clubs"
-
-#     id = Column(Integer, primary_key=True, index=True)
-#     created = Column(Time)
-#     book_title = Column(String)
-#     next_meeting = Column(Time)
-#     is_active = Column(Boolean)
-#     workspace_id = Column(String)
-#     channel_id = Column(String)
-
-#     #admin_user_id = ForeignKey("slack_user.id")
-#     slack_user = relationship(
-#         "SlackUser",
-#         secondary=slack_club_slack_user_table,
-#         backref="slack_clubs"
-#     )
-
-
-# class Note(Base):
+# class Note(Base, WellReadBase):
 #     __tablename__ = "notes"
 
 #     id = Column(Integer, primary_key=True, index=True)
@@ -75,7 +76,7 @@ class SlackUser(Base):
 # tags = relationship("TagNotesAssociation", back_populates="tags")
 
 
-# class TagNotesAssociation(Base):
+# class TagNotesAssociation(Base, WellReadBase):
 #     __tablename__ = "tags_notes_association"
 
 #     tag_id = Column(Integer, ForeignKey("tag.id"), primary_key=True)
@@ -83,7 +84,7 @@ class SlackUser(Base):
 #     tag = relationship("Tag", back_populates="notes")
 #     note = relationship("Note", back_populates="tags")
 
-# class Tag(Base):
+# class Tag(Base, WellReadBase):
 #     __tablename__ = "tags"
 
 #     id = Column(Integer, primary_key=True, index=True)

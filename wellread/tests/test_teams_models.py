@@ -39,4 +39,5 @@ def test_create_and_delete_team(client):
     assert data["team_id"] == team_id
     response = client.get(f"/team/{team_id}/")
     data = response.json()
+    assert response.status_code == 400, response.text
     assert data["detail"] == "Team not found"

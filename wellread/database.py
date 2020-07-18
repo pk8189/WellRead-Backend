@@ -11,4 +11,17 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
+class WellReadBase(object):
+    def update(self, non_null_updates: dict):
+        """
+        Custom DICT -> SQL update method
+        Only safe for non-null setting. 
+        More validation needed if nulling a column potentially
+        """
+        for key, value in non_null_updates.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
+
 Base = declarative_base()
