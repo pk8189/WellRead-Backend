@@ -62,6 +62,17 @@ class User(UserBase):
         orm_mode = True
 
 
+class ClubUpdate(BaseModel):
+    book_title: Optional[str] = None
+    channel_id: Optional[str] = None
+    is_active: Optional[bool] = None
+    next_meeting: Optional[datetime] = None
+
+
+class ClubDelete(BaseModel):
+    id: str
+
+
 class Club(ClubBase):
     id: int
     create_date: datetime

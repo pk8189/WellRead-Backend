@@ -94,3 +94,31 @@ def read_club(club_id: str, db: Session = Depends(get_db)):
     if db_club is None:
         raise HTTPException(status_code=400, detail="Club not found")
     return db_club
+
+
+@app.put("/club/{club_id}/", response_model=schemas.Club)
+def update_club(club_id: str, club: schemas.ClubUpdate, db: Session = Depends(get_db)):
+    db_club = crud.update_club(club_id, club, db)
+    return db_club
+
+
+@app.put("/club/{club_id}/add_user/{slack_id_team_id}/", response_model=schemas.Club)
+def add_user_to_club(
+    club_id: str, slack_id_team_id: str, db: Session = Depends(get_db)
+):
+    db_user = crud.read_user(slack_id_team_id, db)
+    if db_user is None:
+        raise HTTPException(status_code=400, detail="User not found")
+    db_club = crud.read_club(club_id, db)
+    if db_club is None:
+        raise HTTPException(status_code=400, detail="Club not found")
+    new_db_club = crud.add_user_to_club(club_id, slack_id_team_id, db)
+    return new_db_club
+
+
+@app.delete("/club/{club_id}/", response_model=schemas.ClubDelete)
+def delete_club(club_id: str, db: Session = Depends(get_db)):
+    deleted_club = crud.delete_club(club_id, db)
+    if delete_club is None:
+        raise HTTPException(status_code=400, detail="Club not deleted, club not found")
+    return deleted_club

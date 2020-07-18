@@ -84,5 +84,31 @@ def read_club(club_id: str, db: Session):
 
 
 # SlackClub UPDATE
+def update_club(club_id: str, club: schemas.ClubUpdate, db: Session):
+    db_club = db.query(models.SlackClub).filter(models.SlackClub.id == club_id).first()
+    remove_nones = {k: v for k, v in club.dict().items() if v is not None}
+    db_club.update(remove_nones)
+    db.commit()
+    db.refresh(db_club)
+    return db_club
+
+
+# SlackClub UPDATE
+def add_user_to_club(club_id: str, slack_id_team_id: str, db: Session):
+    db_club = db.query(models.SlackClub).filter(models.SlackClub.id == club_id).first()
+    db_user = (
+        db.query(models.SlackUser)
+        .filter(models.SlackUser.slack_id_team_id == slack_id_team_id)
+        .first()
+    )
+    db_club.slack_users.append(db_user)
+    db.commit()
+    db.refresh(db_club)
+    return db_club
+
 
 # SlackClub DELETE
+def delete_club(club_id: str, db: Session):
+    db.query(models.SlackClub).filter(models.SlackClub.id == club_id).delete()
+    db.commit()
+    return {"id": club_id}
