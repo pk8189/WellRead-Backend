@@ -4,7 +4,7 @@ from wellread import models, schemas
 
 
 # SlackTeam CREATE
-def create_team(team: schemas.TeamCreate, db: Session):
+def create_team(team: schemas.team.TeamCreate, db: Session):
     db_team = models.SlackTeam(**team.dict())
     db.add(db_team)
     db.commit()
@@ -29,7 +29,7 @@ def delete_team(team_id: str, db: Session):
 
 
 # SlackUser CREATE
-def create_user(user: schemas.UserCreate, db: Session):
+def create_user(user: schemas.user.UserCreate, db: Session):
     db_user = models.SlackUser(**user.dict())
     db.add(db_user)
     db.commit()
@@ -47,7 +47,7 @@ def read_user(slack_id_team_id: str, db: Session):
 
 
 # SlackUser UPDATE
-def update_user(slack_id_team_id: str, user: schemas.UserUpdate, db: Session):
+def update_user(slack_id_team_id: str, user: schemas.user.UserUpdate, db: Session):
     db_user = (
         db.query(models.SlackUser)
         .filter(models.SlackUser.slack_id_team_id == slack_id_team_id)
@@ -70,7 +70,7 @@ def delete_user(slack_id_team_id: str, db: Session):
 
 
 # SlackClub CREATE
-def create_club(club: schemas.ClubCreate, db: Session):
+def create_club(club: schemas.club.ClubCreate, db: Session):
     db_club = models.SlackClub(**club.dict())
     db.add(db_club)
     db.commit()
@@ -84,7 +84,7 @@ def read_club(club_id: str, db: Session):
 
 
 # SlackClub UPDATE
-def update_club(club_id: str, club: schemas.ClubUpdate, db: Session):
+def update_club(club_id: str, club: schemas.club.ClubUpdate, db: Session):
     db_club = db.query(models.SlackClub).filter(models.SlackClub.id == club_id).first()
     remove_nones = {k: v for k, v in club.dict().items() if v is not None}
     db_club.update(remove_nones)
