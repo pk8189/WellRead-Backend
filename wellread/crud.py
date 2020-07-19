@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 from wellread import models
 from wellread.schemas import club as club_schemas
+from wellread.schemas import note as note_schemas
 from wellread.schemas import team as team_schemas
 from wellread.schemas import user as user_schemas
 
@@ -115,3 +116,12 @@ def delete_club(club_id: str, db: Session):
     db.query(models.SlackClub).filter(models.SlackClub.id == club_id).delete()
     db.commit()
     return {"id": club_id}
+
+
+# Note CREATE
+def create_note(note: note_schemas.NoteCreate, db: Session):
+    db_note = models.Note(**note.dict())
+    db.add(db_note)
+    db.commit()
+    db.refresh(db_note)
+    return db_note

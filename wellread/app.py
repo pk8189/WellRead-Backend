@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from wellread import crud, models
 from wellread.database import SessionLocal, engine
 from wellread.schemas import club as club_schemas
+from wellread.schemas import note as note_schemas
 from wellread.schemas import team as team_schemas
 from wellread.schemas import user as user_schemas
 
@@ -129,3 +130,16 @@ def delete_club(club_id: str, db: Session = Depends(get_db)):
     if delete_club is None:
         raise HTTPException(status_code=400, detail="Club not deleted, club not found")
     return deleted_club
+
+
+@app.post("/note/", response_model=note_schemas.Note)
+def create_note(note: note_schemas.NoteCreate, db: Session = Depends(get_db)):
+    check_params = note.dict()
+    db_user = crud.read_user(check_params["slack_user_id"], db)
+    db_club = crud.read_club(check_params["slack_club_id"], db)
+    if db_user is None:
+        raise HTTPException(status_code=400, detail="User ID does not exist")
+    if db_club is None:
+        raise HTTPException(status_code=400, detail="Club ID does not exist")
+
+    return crud.create_note(note, db)

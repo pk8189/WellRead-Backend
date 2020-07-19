@@ -1,13 +1,9 @@
+from wellread.tests import utils
+
+
 def test_create_and_get_team(client):
-    response = client.post(
-        "/team/",
-        json={
-            "team_id": "T0140PRK962",
-            "name": "WellRead",
-            "domain": "www.domain.com",
-            "email_domain": "",
-        },
-    )
+    api_util = utils.MockApiRequests(client)
+    response = api_util.create_team()
     assert response.status_code == 200, response.text
     data = response.json()
     team_id = data["team_id"]
@@ -22,13 +18,9 @@ def test_create_and_get_team(client):
 
 
 def test_create_and_delete_team(client):
-    response = client.post(
-        "/team/",
-        json={
-            "team_id": "T0140PRK961",
-            "name": "To Be Deleted!",
-            "domain": "www.domain.com",
-        },
+    api_util = utils.MockApiRequests(client)
+    response = api_util.create_team(
+        team_id="T0140PRK961", name="To Be Deleted!", domain="www.domain.com"
     )
     assert response.status_code == 200, response.text
     data = response.json()
