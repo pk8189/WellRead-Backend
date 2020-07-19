@@ -46,6 +46,7 @@ class SlackUser(Base, WellReadBase):
     slack_clubs = relationship(
         "SlackClub", secondary=slack_club_slack_user_table, back_populates="slack_users"
     )
+    notes = relationship("Note", back_populates="slack_users")
 
 
 class SlackClub(Base, WellReadBase):
@@ -56,23 +57,28 @@ class SlackClub(Base, WellReadBase):
     channel_id = Column(String)
     create_date = Column(DateTime, default=datetime.datetime.utcnow)
     is_active = Column(Boolean, default=True)
-
     next_meeting = Column(DateTime, nullable=True)
 
     admin_user_id = Column(String, ForeignKey("slack_users.slack_id_team_id"))
     slack_users = relationship(
         "SlackUser", secondary=slack_club_slack_user_table, back_populates="slack_clubs"
     )
+    notes = relationship("Note", back_populates="slack_clubs")
 
 
-# class Note(Base, WellReadBase):
-#     __tablename__ = "notes"
+class Note(Base, WellReadBase):
+    __tablename__ = "notes"
 
-#     id = Column(Integer, primary_key=True, index=True)
-#     ts = Column(Time, index=True)
-#     content = Column(String, index=True)
+    id = Column(Integer, primary_key=True, index=True)
+    create_date = Column(DateTime, default=datetime.datetime.utcnow)
+    content = Column(String, index=True)
 
-#     user = relationship("User", back_populates="notes")
+    slack_user_id = Column(String, ForeignKey("slack_users.slack_id_team_id"))
+    slack_club_id = Column(Integer, ForeignKey("slack_clubs.id"))
+    slack_users = relationship("SlackUser", back_populates="notes")
+    slack_clubs = relationship("SlackClub", back_populates="notes")
+
+
 # tags = relationship("TagNotesAssociation", back_populates="tags")
 
 
