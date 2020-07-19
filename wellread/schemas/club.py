@@ -11,7 +11,8 @@ class ClubBase(BaseModel):
     create_date: datetime
     is_active: bool
     admin_user_id: str
-    slack_users: Optional[list] = []
+    slack_users: list
+    tags: list
     next_meeting: Optional[datetime] = None
 
 

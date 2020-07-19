@@ -64,6 +64,15 @@ class SlackClub(Base, WellReadBase):
         "SlackUser", secondary=slack_club_slack_user_table, back_populates="slack_clubs"
     )
     notes = relationship("Note", back_populates="slack_club")
+    tags = relationship("Tag", back_populates="slack_club")
+
+
+note_tag_table = Table(
+    "note_tag",
+    Base.metadata,
+    Column("note_tag", String, ForeignKey("notes.id"),),
+    Column("tag", String, ForeignKey("tags.id")),
+)
 
 
 class Note(Base, WellReadBase):
@@ -77,26 +86,21 @@ class Note(Base, WellReadBase):
     slack_club_id = Column(Integer, ForeignKey("slack_clubs.id"))
     slack_user = relationship("SlackUser", back_populates="notes")
     slack_club = relationship("SlackClub", back_populates="notes")
+    tags = relationship(
+        "Tag", uselist=True, secondary=note_tag_table, back_populates="notes"
+    )
 
 
-# tags = relationship("TagNotesAssociation", back_populates="tags")
+class Tag(Base, WellReadBase):
+    __tablename__ = "tags"
 
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    create_date = Column(DateTime, default=datetime.datetime.utcnow)
 
-# class TagNotesAssociation(Base, WellReadBase):
-#     __tablename__ = "tags_notes_association"
+    slack_club_id = Column(Integer, ForeignKey("slack_clubs.id"))
+    slack_club = relationship("SlackClub", back_populates="tags")
 
-#     tag_id = Column(Integer, ForeignKey("tag.id"), primary_key=True)
-#     note_id = Column(Integer, ForeignKey("note.id"), primary_key=True)
-#     tag = relationship("Tag", back_populates="notes")
-#     note = relationship("Note", back_populates="tags")
-
-# class Tag(Base, WellReadBase):
-#     __tablename__ = "tags"
-
-#     id = Column(Integer, primary_key=True, index=True)
-#     name = Column(String)
-
-#     created_by = Column(Integer, ForeignKey("users.id"))
-#     owner = relationship("User", back_populates="items")
-
-#     notes = relationship("TagNotesAssociation", back_populates="notes")
+    notes = relationship(
+        "Note", uselist=True, secondary=note_tag_table, back_populates="tags"
+    )

@@ -1,9 +1,7 @@
 from datetime import datetime
+from typing import Any, List
 
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
-
-from wellread.schemas.club import Club
-from wellread.schemas.user import User
 
 
 class NoteBase(BaseModel):
@@ -12,8 +10,9 @@ class NoteBase(BaseModel):
     content: str
     slack_user_id: str
     slack_club_id: int
-    slack_user: User
-    slack_club: Club
+    slack_user: Any
+    slack_club: Any
+    tags: List[Any]
 
 
 class NoteCreate(BaseModel):
@@ -24,6 +23,10 @@ class NoteCreate(BaseModel):
 
 class NoteUpdate(BaseModel):
     content: str
+
+
+class NoteAddTags(BaseModel):
+    tags: List[int]
 
 
 class NoteDelete(BaseModel):

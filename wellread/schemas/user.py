@@ -13,6 +13,7 @@ class UserBase(BaseModel):
     profile_image_original: str
     team_id: str
     slack_clubs: Optional[list] = []
+    notes: Optional[list] = []
 
 
 class UserCreate(UserBase):

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from wellread import models
 from wellread.schemas import club as club_schemas
 from wellread.schemas import note as note_schemas
+from wellread.schemas import tag as tag_schemas
 from wellread.schemas import team as team_schemas
 from wellread.schemas import user as user_schemas
 
@@ -125,3 +126,68 @@ def create_note(note: note_schemas.NoteCreate, db: Session):
     db.commit()
     db.refresh(db_note)
     return db_note
+
+
+# Note READ
+def read_note(note_id: str, db: Session):
+    return db.query(models.Note).filter(models.Note.id == note_id).first()
+
+
+# Note UPDATE
+def update_note(note_id: str, note: note_schemas.NoteUpdate, db: Session):
+    db_note = db.query(models.Note).filter(models.Note.id == note_id).first()
+    remove_nones = {k: v for k, v in note.dict().items() if v is not None}
+    db_note.update(remove_nones)
+    db.commit()
+    db.refresh(db_note)
+    return db_note
+
+
+# Note UPDATE
+def add_tags_to_note(note_id: str, tag_ids: list, db: Session):
+    db_note = db.query(models.Note).filter(models.Note.id == note_id).first()
+    for tag_id in tag_ids:
+        db_tag = db.query(models.Tag).filter(models.Tag.id == tag_id).first()
+        db_note.tags.append(db_tag)
+    db.add(db_note)
+    db.commit()
+    db.refresh(db_note)
+    return db_note
+
+
+# Note DELETE
+def delete_note(note_id: str, db: Session):
+    db.query(models.Note).filter(models.Note.id == note_id).delete()
+    db.commit()
+    return {"id": note_id}
+
+
+# Tag CREATE
+def create_tag(tag: tag_schemas.TagCreate, db: Session):
+    db_tag = models.Tag(**tag.dict())
+    db.add(db_tag)
+    db.commit()
+    db.refresh(db_tag)
+    return db_tag
+
+
+# Tag READ
+def read_tag(tag_id: str, db: Session):
+    return db.query(models.Tag).filter(models.Tag.id == tag_id).first()
+
+
+# Tag UPDATE
+def update_tag(tag_id: str, tag: tag_schemas.TagUpdate, db: Session):
+    db_tag = db.query(models.Tag).filter(models.Tag.id == tag_id).first()
+    remove_nones = {k: v for k, v in tag.dict().items() if v is not None}
+    db_tag.update(remove_nones)
+    db.commit()
+    db.refresh(db_tag)
+    return db_tag
+
+
+# Tag DELETE
+def delete_tag(tag_id: str, db: Session):
+    db.query(models.Tag).filter(models.Tag.id == tag_id).delete()
+    db.commit()
+    return {"id": tag_id}

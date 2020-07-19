@@ -60,4 +60,28 @@ class MockApiRequests:
         slack_club_id=1,
     ):
         body = self.prep_kwargs(locals())
-        return self.client.post("/note/", json=body,)
+        return self.client.post("/note/", json=body)
+
+    def update_note(
+        self, note_id=1, content="A new type of note!",
+    ):
+        body = self.prep_kwargs(locals())
+        return self.client.put(f"/note/{note_id}/", json=body)
+
+    def add_tags_to_note(
+        self, note_id=1, tags=[1],
+    ):
+        body = self.prep_kwargs(locals())
+        return self.client.put(f"/note/{note_id}/tag/", json=body)
+
+    def create_tag(
+        self, name="taggy boy", slack_club_id=1,
+    ):
+        body = self.prep_kwargs(locals())
+        return self.client.post("/tag/", json=body)
+
+    def update_tag(
+        self, name="a new tag name", tag_id=1,
+    ):
+        body = self.prep_kwargs(locals())
+        return self.client.put(f"/tag/{tag_id}/", json=body)

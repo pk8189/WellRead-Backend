@@ -5,6 +5,7 @@ from wellread import crud, models
 from wellread.database import SessionLocal, engine
 from wellread.schemas import club as club_schemas
 from wellread.schemas import note as note_schemas
+from wellread.schemas import tag as tag_schemas
 from wellread.schemas import team as team_schemas
 from wellread.schemas import user as user_schemas
 
@@ -143,3 +144,76 @@ def create_note(note: note_schemas.NoteCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Club ID does not exist")
 
     return crud.create_note(note, db)
+
+
+@app.get("/note/{note_id}/", response_model=note_schemas.Note)
+def read_note(note_id: str, db: Session = Depends(get_db)):
+    db_note = crud.read_note(note_id, db)
+    if db_note is None:
+        raise HTTPException(status_code=400, detail="Note not found")
+    return db_note
+
+
+@app.put("/note/{note_id}/", response_model=note_schemas.Note)
+def update_note(
+    note_id: str, note: note_schemas.NoteUpdate, db: Session = Depends(get_db)
+):
+    db_note = crud.read_note(note_id, db)
+    if db_note is None:
+        raise HTTPException(status_code=400, detail="Note not found")
+    return crud.update_note(note_id, note, db)
+
+
+@app.put("/note/{note_id}/tag/", response_model=note_schemas.Note)
+def add_tags_to_notes(
+    note_id: str, tags: note_schemas.NoteAddTags, db: Session = Depends(get_db)
+):
+    db_note = crud.read_note(note_id, db)
+    for tag in tags.tags:
+        db_tag = crud.read_tag(tag, db)
+        if db_tag is None:
+            raise HTTPException(status_code=400, detail="Tag not found")
+    if db_note is None:
+        raise HTTPException(status_code=400, detail="Note not found")
+    return crud.add_tags_to_note(note_id, tags.tags, db)
+
+
+@app.delete("/note/{note_id}/", response_model=note_schemas.NoteDelete)
+def delete_note(note_id: str, db: Session = Depends(get_db)):
+    deleted_note = crud.read_note(note_id, db)
+    if deleted_note is None:
+        raise HTTPException(status_code=400, detail="Note not deleted, note not found")
+    return crud.delete_note(note_id, db)
+
+
+@app.post("/tag/", response_model=tag_schemas.Tag)
+def create_tag(tag: tag_schemas.TagCreate, db: Session = Depends(get_db)):
+    check_params = tag.dict()
+    db_club = crud.read_club(check_params["slack_club_id"], db)
+    if db_club is None:
+        raise HTTPException(status_code=400, detail="Club ID does not exist")
+    return crud.create_tag(tag, db)
+
+
+@app.get("/tag/{tag_id}/", response_model=tag_schemas.Tag)
+def read_tag(tag_id: str, db: Session = Depends(get_db)):
+    db_tag = crud.read_tag(tag_id, db)
+    if db_tag is None:
+        raise HTTPException(status_code=400, detail="Tag not found")
+    return db_tag
+
+
+@app.put("/tag/{tag_id}/", response_model=tag_schemas.Tag)
+def update_tag(tag_id: str, tag: tag_schemas.TagUpdate, db: Session = Depends(get_db)):
+    db_tag = crud.read_tag(tag_id, db)
+    if db_tag is None:
+        raise HTTPException(status_code=400, detail="Tag not found")
+    return crud.update_tag(tag_id, tag, db)
+
+
+@app.delete("/tag/{tag_id}/", response_model=tag_schemas.TagDelete)
+def delete_tag(tag_id: str, db: Session = Depends(get_db)):
+    deleted_tag = crud.read_tag(tag_id, db)
+    if deleted_tag is None:
+        raise HTTPException(status_code=400, detail="Tag not deleted, tag not found")
+    return crud.delete_tag(tag_id, db)
