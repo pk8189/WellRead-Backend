@@ -38,12 +38,11 @@ def test_create_read_update_delete_notes(client):
     response = api_util.create_tag()
     data = response.json()
     tag_id = data["id"]
-    response = api_util.create_tag()
+    response = api_util.create_tag(name="second tag")
     data = response.json()
     tag_id_2 = data["id"]
     tags = [tag_id, tag_id_2]
     response = api_util.add_tags_to_note(note_id=note_id, tags=tags)
     assert updated_res.status_code == 200, updated_res.text
     data = updated_res.json()
-    breakpoint()
     assert data["tags"] == tags

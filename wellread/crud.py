@@ -1,15 +1,10 @@
 from sqlalchemy.orm import Session
 
-from wellread import models
-from wellread.schemas import club as club_schemas
-from wellread.schemas import note as note_schemas
-from wellread.schemas import tag as tag_schemas
-from wellread.schemas import team as team_schemas
-from wellread.schemas import user as user_schemas
+from wellread import models, schemas
 
 
 # SlackTeam CREATE
-def create_team(team: team_schemas.TeamCreate, db: Session):
+def create_team(team: schemas.TeamCreate, db: Session):
     db_team = models.SlackTeam(**team.dict())
     db.add(db_team)
     db.commit()
@@ -34,7 +29,7 @@ def delete_team(team_id: str, db: Session):
 
 
 # SlackUser CREATE
-def create_user(user: user_schemas.UserCreate, db: Session):
+def create_user(user: schemas.UserCreate, db: Session):
     db_user = models.SlackUser(**user.dict())
     db.add(db_user)
     db.commit()
@@ -52,7 +47,7 @@ def read_user(slack_id_team_id: str, db: Session):
 
 
 # SlackUser UPDATE
-def update_user(slack_id_team_id: str, user: user_schemas.UserUpdate, db: Session):
+def update_user(slack_id_team_id: str, user: schemas.UserUpdate, db: Session):
     db_user = (
         db.query(models.SlackUser)
         .filter(models.SlackUser.slack_id_team_id == slack_id_team_id)
@@ -75,7 +70,7 @@ def delete_user(slack_id_team_id: str, db: Session):
 
 
 # SlackClub CREATE
-def create_club(club: club_schemas.ClubCreate, db: Session):
+def create_club(club: schemas.ClubCreate, db: Session):
     db_club = models.SlackClub(**club.dict())
     db.add(db_club)
     db.commit()
@@ -89,7 +84,7 @@ def read_club(club_id: str, db: Session):
 
 
 # SlackClub UPDATE
-def update_club(club_id: str, club: club_schemas.ClubUpdate, db: Session):
+def update_club(club_id: str, club: schemas.ClubUpdate, db: Session):
     db_club = db.query(models.SlackClub).filter(models.SlackClub.id == club_id).first()
     remove_nones = {k: v for k, v in club.dict().items() if v is not None}
     db_club.update(remove_nones)
@@ -120,7 +115,7 @@ def delete_club(club_id: str, db: Session):
 
 
 # Note CREATE
-def create_note(note: note_schemas.NoteCreate, db: Session):
+def create_note(note: schemas.NoteCreate, db: Session):
     db_note = models.Note(**note.dict())
     db.add(db_note)
     db.commit()
@@ -134,7 +129,7 @@ def read_note(note_id: str, db: Session):
 
 
 # Note UPDATE
-def update_note(note_id: str, note: note_schemas.NoteUpdate, db: Session):
+def update_note(note_id: str, note: schemas.NoteUpdate, db: Session):
     db_note = db.query(models.Note).filter(models.Note.id == note_id).first()
     remove_nones = {k: v for k, v in note.dict().items() if v is not None}
     db_note.update(remove_nones)
@@ -163,7 +158,7 @@ def delete_note(note_id: str, db: Session):
 
 
 # Tag CREATE
-def create_tag(tag: tag_schemas.TagCreate, db: Session):
+def create_tag(tag: schemas.TagCreate, db: Session):
     db_tag = models.Tag(**tag.dict())
     db.add(db_tag)
     db.commit()
@@ -177,7 +172,7 @@ def read_tag(tag_id: str, db: Session):
 
 
 # Tag UPDATE
-def update_tag(tag_id: str, tag: tag_schemas.TagUpdate, db: Session):
+def update_tag(tag_id: str, tag: schemas.TagUpdate, db: Session):
     db_tag = db.query(models.Tag).filter(models.Tag.id == tag_id).first()
     remove_nones = {k: v for k, v in tag.dict().items() if v is not None}
     db_tag.update(remove_nones)

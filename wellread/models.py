@@ -86,9 +86,7 @@ class Note(Base, WellReadBase):
     slack_club_id = Column(Integer, ForeignKey("slack_clubs.id"))
     slack_user = relationship("SlackUser", back_populates="notes")
     slack_club = relationship("SlackClub", back_populates="notes")
-    tags = relationship(
-        "Tag", uselist=True, secondary=note_tag_table, back_populates="notes"
-    )
+    tags = relationship("Tag", secondary=note_tag_table, back_populates="notes")
 
 
 class Tag(Base, WellReadBase):
@@ -101,6 +99,4 @@ class Tag(Base, WellReadBase):
     slack_club_id = Column(Integer, ForeignKey("slack_clubs.id"))
     slack_club = relationship("SlackClub", back_populates="tags")
 
-    notes = relationship(
-        "Note", uselist=True, secondary=note_tag_table, back_populates="tags"
-    )
+    notes = relationship("Note", secondary=note_tag_table, back_populates="tags")

@@ -1,13 +1,8 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
-from wellread import crud, models
+from wellread import crud, models, schemas
 from wellread.database import SessionLocal, engine
-from wellread.schemas import club as club_schemas
-from wellread.schemas import note as note_schemas
-from wellread.schemas import tag as tag_schemas
-from wellread.schemas import team as team_schemas
-from wellread.schemas import user as user_schemas
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -22,15 +17,15 @@ def get_db():
         db.close()  # pylint: disable=no-member
 
 
-@app.post("/team/", response_model=team_schemas.Team)
-def create_team(team: team_schemas.TeamCreate, db: Session = Depends(get_db)):
+@app.post("/team/", response_model=schemas.Team)
+def create_team(team: schemas.TeamCreate, db: Session = Depends(get_db)):
     db_team = crud.read_team(team.team_id, db)
     if db_team:
         raise HTTPException(status_code=400, detail="Team already exists")
     return crud.create_team(team, db)
 
 
-@app.get("/team/{team_id}/", response_model=team_schemas.Team)
+@app.get("/team/{team_id}/", response_model=schemas.Team)
 def read_team(team_id: str, db: Session = Depends(get_db)):
     db_team = crud.read_team(team_id, db)
     if db_team is None:
@@ -38,7 +33,7 @@ def read_team(team_id: str, db: Session = Depends(get_db)):
     return db_team
 
 
-@app.delete("/team/{team_id}/", response_model=team_schemas.TeamDelete)
+@app.delete("/team/{team_id}/", response_model=schemas.TeamDelete)
 def delete_team(team_id: str, db: Session = Depends(get_db)):
     deleted_team = crud.delete_team(team_id, db)
     if deleted_team is None:
@@ -48,8 +43,8 @@ def delete_team(team_id: str, db: Session = Depends(get_db)):
     return deleted_team
 
 
-@app.post("/user/", response_model=user_schemas.User)
-def create_user(user: user_schemas.UserCreate, db: Session = Depends(get_db)):
+@app.post("/user/", response_model=schemas.User)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.read_user(user.slack_id_team_id, db)
     if db_user:
         raise HTTPException(status_code=400, detail="User already exists")
@@ -62,7 +57,7 @@ def create_user(user: user_schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(user, db)
 
 
-@app.get("/user/{slack_id_team_id}/", response_model=user_schemas.User)
+@app.get("/user/{slack_id_team_id}/", response_model=schemas.User)
 def read_user(slack_id_team_id: str, db: Session = Depends(get_db)):
     db_user = crud.read_user(slack_id_team_id, db)
     if db_user is None:
@@ -70,14 +65,14 @@ def read_user(slack_id_team_id: str, db: Session = Depends(get_db)):
     return db_user
 
 
-@app.put("/user/{slack_id_team_id}/", response_model=user_schemas.User)
+@app.put("/user/{slack_id_team_id}/", response_model=schemas.User)
 def update_user(
-    slack_id_team_id: str, user: user_schemas.UserUpdate, db: Session = Depends(get_db)
+    slack_id_team_id: str, user: schemas.UserUpdate, db: Session = Depends(get_db)
 ):
     return crud.update_user(slack_id_team_id, user, db)
 
 
-@app.delete("/user/{slack_id_team_id}/", response_model=user_schemas.UserDelete)
+@app.delete("/user/{slack_id_team_id}/", response_model=schemas.UserDelete)
 def delete_user(slack_id_team_id: str, db: Session = Depends(get_db)):
     deleted_user = crud.delete_user(slack_id_team_id, db)
     if deleted_user is None:
@@ -85,15 +80,15 @@ def delete_user(slack_id_team_id: str, db: Session = Depends(get_db)):
     return deleted_user
 
 
-@app.post("/club/", response_model=club_schemas.Club)
-def create_club(club: club_schemas.ClubCreate, db: Session = Depends(get_db)):
+@app.post("/club/", response_model=schemas.Club)
+def create_club(club: schemas.ClubCreate, db: Session = Depends(get_db)):
     db_user = crud.read_user(club.admin_user_id, db)
     if db_user is None:
         raise HTTPException(status_code=400, detail="User creating club not found")
     return crud.create_club(club, db)
 
 
-@app.get("/club/{club_id}/", response_model=club_schemas.Club)
+@app.get("/club/{club_id}/", response_model=schemas.Club)
 def read_club(club_id: str, db: Session = Depends(get_db)):
     db_club = crud.read_club(club_id, db)
     if db_club is None:
@@ -101,17 +96,13 @@ def read_club(club_id: str, db: Session = Depends(get_db)):
     return db_club
 
 
-@app.put("/club/{club_id}/", response_model=club_schemas.Club)
-def update_club(
-    club_id: str, club: club_schemas.ClubUpdate, db: Session = Depends(get_db)
-):
+@app.put("/club/{club_id}/", response_model=schemas.Club)
+def update_club(club_id: str, club: schemas.ClubUpdate, db: Session = Depends(get_db)):
     db_club = crud.update_club(club_id, club, db)
     return db_club
 
 
-@app.put(
-    "/club/{club_id}/add_user/{slack_id_team_id}/", response_model=club_schemas.Club
-)
+@app.put("/club/{club_id}/add_user/{slack_id_team_id}/", response_model=schemas.Club)
 def add_user_to_club(
     club_id: str, slack_id_team_id: str, db: Session = Depends(get_db)
 ):
@@ -125,7 +116,7 @@ def add_user_to_club(
     return new_db_club
 
 
-@app.delete("/club/{club_id}/", response_model=club_schemas.ClubDelete)
+@app.delete("/club/{club_id}/", response_model=schemas.ClubDelete)
 def delete_club(club_id: str, db: Session = Depends(get_db)):
     deleted_club = crud.delete_club(club_id, db)
     if delete_club is None:
@@ -133,8 +124,8 @@ def delete_club(club_id: str, db: Session = Depends(get_db)):
     return deleted_club
 
 
-@app.post("/note/", response_model=note_schemas.Note)
-def create_note(note: note_schemas.NoteCreate, db: Session = Depends(get_db)):
+@app.post("/note/", response_model=schemas.Note)
+def create_note(note: schemas.NoteCreate, db: Session = Depends(get_db)):
     check_params = note.dict()
     db_user = crud.read_user(check_params["slack_user_id"], db)
     db_club = crud.read_club(check_params["slack_club_id"], db)
@@ -146,7 +137,7 @@ def create_note(note: note_schemas.NoteCreate, db: Session = Depends(get_db)):
     return crud.create_note(note, db)
 
 
-@app.get("/note/{note_id}/", response_model=note_schemas.Note)
+@app.get("/note/{note_id}/", response_model=schemas.Note)
 def read_note(note_id: str, db: Session = Depends(get_db)):
     db_note = crud.read_note(note_id, db)
     if db_note is None:
@@ -154,19 +145,17 @@ def read_note(note_id: str, db: Session = Depends(get_db)):
     return db_note
 
 
-@app.put("/note/{note_id}/", response_model=note_schemas.Note)
-def update_note(
-    note_id: str, note: note_schemas.NoteUpdate, db: Session = Depends(get_db)
-):
+@app.put("/note/{note_id}/", response_model=schemas.Note)
+def update_note(note_id: str, note: schemas.NoteUpdate, db: Session = Depends(get_db)):
     db_note = crud.read_note(note_id, db)
     if db_note is None:
         raise HTTPException(status_code=400, detail="Note not found")
     return crud.update_note(note_id, note, db)
 
 
-@app.put("/note/{note_id}/tag/", response_model=note_schemas.Note)
+@app.put("/note/{note_id}/tag/", response_model=schemas.Note)
 def add_tags_to_notes(
-    note_id: str, tags: note_schemas.NoteAddTags, db: Session = Depends(get_db)
+    note_id: str, tags: schemas.NoteAddTags, db: Session = Depends(get_db)
 ):
     db_note = crud.read_note(note_id, db)
     for tag in tags.tags:
@@ -178,7 +167,7 @@ def add_tags_to_notes(
     return crud.add_tags_to_note(note_id, tags.tags, db)
 
 
-@app.delete("/note/{note_id}/", response_model=note_schemas.NoteDelete)
+@app.delete("/note/{note_id}/", response_model=schemas.NoteDelete)
 def delete_note(note_id: str, db: Session = Depends(get_db)):
     deleted_note = crud.read_note(note_id, db)
     if deleted_note is None:
@@ -186,8 +175,8 @@ def delete_note(note_id: str, db: Session = Depends(get_db)):
     return crud.delete_note(note_id, db)
 
 
-@app.post("/tag/", response_model=tag_schemas.Tag)
-def create_tag(tag: tag_schemas.TagCreate, db: Session = Depends(get_db)):
+@app.post("/tag/", response_model=schemas.Tag)
+def create_tag(tag: schemas.TagCreate, db: Session = Depends(get_db)):
     check_params = tag.dict()
     db_club = crud.read_club(check_params["slack_club_id"], db)
     if db_club is None:
@@ -195,7 +184,7 @@ def create_tag(tag: tag_schemas.TagCreate, db: Session = Depends(get_db)):
     return crud.create_tag(tag, db)
 
 
-@app.get("/tag/{tag_id}/", response_model=tag_schemas.Tag)
+@app.get("/tag/{tag_id}/", response_model=schemas.Tag)
 def read_tag(tag_id: str, db: Session = Depends(get_db)):
     db_tag = crud.read_tag(tag_id, db)
     if db_tag is None:
@@ -203,15 +192,15 @@ def read_tag(tag_id: str, db: Session = Depends(get_db)):
     return db_tag
 
 
-@app.put("/tag/{tag_id}/", response_model=tag_schemas.Tag)
-def update_tag(tag_id: str, tag: tag_schemas.TagUpdate, db: Session = Depends(get_db)):
+@app.put("/tag/{tag_id}/", response_model=schemas.Tag)
+def update_tag(tag_id: str, tag: schemas.TagUpdate, db: Session = Depends(get_db)):
     db_tag = crud.read_tag(tag_id, db)
     if db_tag is None:
         raise HTTPException(status_code=400, detail="Tag not found")
     return crud.update_tag(tag_id, tag, db)
 
 
-@app.delete("/tag/{tag_id}/", response_model=tag_schemas.TagDelete)
+@app.delete("/tag/{tag_id}/", response_model=schemas.TagDelete)
 def delete_tag(tag_id: str, db: Session = Depends(get_db)):
     deleted_tag = crud.read_tag(tag_id, db)
     if deleted_tag is None:
