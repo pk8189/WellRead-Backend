@@ -43,6 +43,7 @@ def test_create_read_update_delete_notes(client):
     tag_id_2 = data["id"]
     tags = [tag_id, tag_id_2]
     response = api_util.add_tags_to_note(note_id=note_id, tags=tags)
-    assert updated_res.status_code == 200, updated_res.text
-    data = updated_res.json()
-    assert data["tags"] == tags
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["tags"][0]["id"] == tags[0]
+    assert data["tags"][1]["id"] == tags[1]

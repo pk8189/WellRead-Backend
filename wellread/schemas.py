@@ -175,6 +175,3 @@ class Note(NoteBase):
 class Tag(TagBase):
     slack_club: ClubBase
     notes: List[NoteBase]
-
-
-Tag.update_forward_refs()  # necessary to avoid recursion error in m2m orm_mode
