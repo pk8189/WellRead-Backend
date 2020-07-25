@@ -34,12 +34,9 @@ class SlackUser(Base, WellReadBase):
     slack_id_team_id = Column(
         String, primary_key=True, index=True
     )  # user_id_team_id from slack API
-    email = Column(String)  # email from slack API user object
     name = Column(String)  # full name given in user object of slack API
-    is_app_user = Column(Boolean)  # user is authorized to call our app
-    is_owner = Column(Boolean)  # user is an owner of the current workspace
+    tz = Column(String)
     locale = Column(String)  # chosen IETF language code for user
-    profile_image_original = Column(String)  # profile image URL
 
     team_id = Column(String, ForeignKey("slack_teams.team_id"), nullable=False)
     slack_team = relationship("SlackTeam", back_populates="slack_users")

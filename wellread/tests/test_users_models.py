@@ -26,11 +26,10 @@ def test_create_get_and_update_user(client):
     assert data["slack_id_team_id"] == "U014YSCLQ2X_T0140PRK962"
 
     my_new_name = "Not Patrick Anymore!"
-    response = api_util.update_user(slack_id_team_id, name=my_new_name, is_owner=False)
+    response = api_util.update_user(slack_id_team_id, name=my_new_name)
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["name"] == my_new_name
-    assert data["is_owner"] == False
 
     response = client.delete(f"/user/{slack_id_team_id}/")
     assert response.status_code == 200, response.text

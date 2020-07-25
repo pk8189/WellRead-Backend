@@ -32,11 +32,7 @@ def test_create_get_update_and_delete_club(client):
 
     user_2 = "ALKAFKLJSDFKLJ"
     api_util.create_user(
-        slack_id_team_id=user_2,
-        name="User 2",
-        email="pmasdf.gmail.com",
-        profile_image_original="https://localtiontosimage.com/test/",
-        team_id=team_id,
+        slack_id_team_id=user_2, name="User 2", team_id=team_id,
     )
     response = client.put(f"/club/{club_id}/add_user/{user_2}/")
     assert response.status_code == 200, response.text

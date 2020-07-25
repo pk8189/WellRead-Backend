@@ -19,11 +19,8 @@ class MockApiRequests:
         self,
         slack_id_team_id="U014YSCLQ2X_T0140PRK962",
         name="Patrick M Kelly",
-        email="itsanemail@gmail.com",
-        is_app_user=True,
-        is_owner=True,
-        locale="A Locale",
-        profile_image_original="https://localtiontosimage.com/test/",
+        tz="Eastern Daylight Time",
+        locale="en-US",
         team_id="T0140PRK962",
     ):
         body = self.prep_kwargs(locals())
