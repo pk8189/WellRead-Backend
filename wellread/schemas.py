@@ -153,6 +153,10 @@ class Club(ClubBase):
     tags: List[TagBase]
 
 
+class Clubs(BaseModel):
+    clubs: List[Club]
+
+
 class Note(NoteBase):
     tags: List[TagBase]
     slack_user: UserBase

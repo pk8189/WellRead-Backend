@@ -83,6 +83,11 @@ def read_club(club_id: str, db: Session):
     return db.query(models.SlackClub).filter(models.SlackClub.id == club_id).first()
 
 
+# SlackClub READ
+def read_clubs(db: Session):
+    return {"clubs": db.query(models.SlackClub).all()}
+
+
 # SlackClub UPDATE
 def update_club(club_id: str, club: schemas.ClubUpdate, db: Session):
     db_club = db.query(models.SlackClub).filter(models.SlackClub.id == club_id).first()

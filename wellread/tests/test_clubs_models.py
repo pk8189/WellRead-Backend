@@ -22,6 +22,11 @@ def test_create_get_update_and_delete_club(client):
     assert data["admin_user_id"] == user_id
     assert not data["slack_users"]
 
+    response = client.get(f"/club/")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert len(data["clubs"]) == 1
+
     new_book_title = "Decolonizing Wealth"
     response = client.put(f"/club/{club_id}/", json={"book_title": new_book_title})
     assert response.status_code == 200, response.text

@@ -96,6 +96,11 @@ def read_club(club_id: str, db: Session = Depends(get_db)):
     return db_club
 
 
+@app.get("/club/", response_model=schemas.Clubs)
+def read_clubs(db: Session = Depends(get_db)):
+    return crud.read_clubs(db)
+
+
 @app.put("/club/{club_id}/", response_model=schemas.Club)
 def update_club(club_id: str, club: schemas.ClubUpdate, db: Session = Depends(get_db)):
     db_club = crud.update_club(club_id, club, db)
