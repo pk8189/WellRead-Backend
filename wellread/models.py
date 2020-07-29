@@ -54,7 +54,7 @@ class SlackClub(Base, WellReadBase):
     channel_id = Column(String)
     create_date = Column(DateTime, default=datetime.datetime.utcnow)
     is_active = Column(Boolean, default=True)
-    next_meeting = Column(DateTime, nullable=True)
+    intro_message_ts = Column(String, nullable=True)
 
     admin_user_id = Column(String, ForeignKey("slack_users.slack_id_team_id"))
     slack_users = relationship(

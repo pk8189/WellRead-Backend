@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
@@ -97,7 +99,9 @@ def read_club(club_id: str, db: Session = Depends(get_db)):
 
 
 @app.get("/club/", response_model=schemas.Clubs)
-def read_clubs(db: Session = Depends(get_db)):
+def read_clubs(slack_id_team_id: Optional[str] = None, db: Session = Depends(get_db)):
+    if slack_id_team_id:
+        return crud.read_clubs(db, slack_id_team_id=slack_id_team_id)
     return crud.read_clubs(db)
 
 

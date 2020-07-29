@@ -84,8 +84,19 @@ def read_club(club_id: str, db: Session):
 
 
 # SlackClub READ
-def read_clubs(db: Session):
-    return {"clubs": db.query(models.SlackClub).all()}
+def read_clubs(db: Session, slack_id_team_id: str = None):
+    if not slack_id_team_id:
+        return {"clubs": db.query(models.SlackClub).all()}
+    query_results = (
+        db.query(models.SlackClub)
+        .filter(
+            models.SlackClub.slack_users.any(
+                models.SlackUser.slack_id_team_id == slack_id_team_id
+            )
+        )
+        .all()
+    )
+    return {"clubs": query_results}
 
 
 # SlackClub UPDATE

@@ -33,7 +33,7 @@ class ClubBase(BaseModel):
     create_date: datetime
     is_active: bool
     admin_user_id: str
-    next_meeting: Optional[datetime] = None
+    intro_message_ts: Optional[str] = None
 
     class Config:
         orm_mode = True
@@ -98,14 +98,13 @@ class ClubCreate(BaseModel):
     book_title: str
     channel_id: str
     admin_user_id: str
-    next_meeting: Optional[datetime] = None
 
 
 class ClubUpdate(BaseModel):
     book_title: Optional[str] = None
     channel_id: Optional[str] = None
     is_active: Optional[bool] = None
-    next_meeting: Optional[datetime] = None
+    intro_message_ts: Optional[str] = None
 
 
 class ClubDelete(BaseModel):
