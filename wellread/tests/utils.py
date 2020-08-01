@@ -59,9 +59,7 @@ class MockApiRequests:
         body = self.prep_kwargs(locals())
         return self.client.post("/note/", json=body)
 
-    def update_note(
-        self, note_id=1, content="A new type of note!",
-    ):
+    def update_note(self, note_id=1, content="A new type of note!", private=False):
         body = self.prep_kwargs(locals())
         return self.client.put(f"/note/{note_id}/", json=body)
 

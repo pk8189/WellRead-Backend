@@ -45,6 +45,7 @@ class NoteBase(BaseModel):
     content: str
     slack_user_id: str
     slack_club_id: int
+    private: bool
 
     class Config:
         orm_mode = True
@@ -79,10 +80,12 @@ class NoteCreate(BaseModel):
     content: str
     slack_user_id: str
     slack_club_id: int
+    private: Optional[bool]
 
 
 class NoteUpdate(BaseModel):
     content: str
+    private: Optional[bool]
 
 
 class NoteAddTags(BaseModel):
@@ -165,3 +168,7 @@ class Note(NoteBase):
 class Tag(TagBase):
     slack_club: ClubBase
     notes: List[NoteBase]
+
+
+class Tags(BaseModel):
+    tags: List[Tag]

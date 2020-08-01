@@ -187,6 +187,14 @@ def read_tag(tag_id: str, db: Session):
     return db.query(models.Tag).filter(models.Tag.id == tag_id).first()
 
 
+# Tag READ
+def read_tags(club_id: str, db: Session):
+    query_results = (
+        db.query(models.Tag).filter(models.Tag.slack_club_id == club_id).all()
+    )
+    return {"tags": query_results}
+
+
 # Tag UPDATE
 def update_tag(tag_id: str, tag: schemas.TagUpdate, db: Session):
     db_tag = db.query(models.Tag).filter(models.Tag.id == tag_id).first()

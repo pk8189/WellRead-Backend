@@ -78,6 +78,7 @@ class Note(Base, WellReadBase):
     id = Column(Integer, primary_key=True, index=True)
     create_date = Column(DateTime, default=datetime.datetime.utcnow)
     content = Column(String, index=True)
+    private = Column(Boolean, default=False)
 
     slack_user_id = Column(String, ForeignKey("slack_users.slack_id_team_id"))
     slack_club_id = Column(Integer, ForeignKey("slack_clubs.id"))

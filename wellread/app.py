@@ -193,6 +193,11 @@ def create_tag(tag: schemas.TagCreate, db: Session = Depends(get_db)):
     return crud.create_tag(tag, db)
 
 
+@app.get("/tag/", response_model=schemas.Tags)
+def read_tags(club_id: str, db: Session = Depends(get_db)):
+    return crud.read_tags(club_id, db)
+
+
 @app.get("/tag/{tag_id}/", response_model=schemas.Tag)
 def read_tag(tag_id: str, db: Session = Depends(get_db)):
     db_tag = crud.read_tag(tag_id, db)

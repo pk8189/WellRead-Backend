@@ -17,14 +17,18 @@ def test_create_read_update_delete_notes(client):
     data = response.json()
     note_id = data["id"]
     assert data["content"] == "Oh my, such a lovely note!"
+    assert data["private"] == False
     get_response = client.get(f"/note/{note_id}/")
     assert get_response.status_code == 200, get_response.text
     data = get_response.json()
     assert data["content"] == "Oh my, such a lovely note!"
-    updated_res = api_util.update_note(note_id=note_id, content="new content")
+    updated_res = api_util.update_note(
+        note_id=note_id, content="new content", private=True
+    )
     assert updated_res.status_code == 200, updated_res.text
     data = updated_res.json()
     assert data["content"] == "new content"
+    assert data["private"] == True
     delete_res = client.delete(f"/note/{note_id}/")
     assert delete_res.status_code == 200, delete_res.text
     get_response = client.get(f"/note/{note_id}/")

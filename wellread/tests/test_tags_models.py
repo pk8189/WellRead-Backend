@@ -23,6 +23,11 @@ def test_create_read_update_delete_tags(client):
     data = response.json()
     assert data["name"] == "a new tag name"
 
+    response = client.get(f"/tag/?club_id={slack_club_id}")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["tags"][0]["name"] == "a new tag name"
+
     response = api_util.update_tag(tag_id=tag_id, name="newer name")
     assert response.status_code == 200, response.text
     data = response.json()
