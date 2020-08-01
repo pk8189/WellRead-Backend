@@ -125,7 +125,8 @@ def add_user_to_club(club_id: str, slack_id_team_id: str, db: Session):
 
 # SlackClub DELETE
 def delete_club(club_id: str, db: Session):
-    db.query(models.SlackClub).filter(models.SlackClub.id == club_id).delete()
+    db_club = db.query(models.SlackClub).filter(models.SlackClub.id == club_id).first()
+    db.delete(db_club)
     db.commit()
     return {"id": club_id}
 
@@ -142,6 +143,17 @@ def create_note(note: schemas.NoteCreate, db: Session):
 # Note READ
 def read_note(note_id: str, db: Session):
     return db.query(models.Note).filter(models.Note.id == note_id).first()
+
+
+# Note READ
+def read_notes(slack_id_team_id: str, club_id: str, db: Session):
+    query_results = (
+        db.query(models.Note)
+        .filter(models.Note.slack_user_id == slack_id_team_id)
+        .filter(models.Note.slack_club_id == club_id)
+        .all()
+    )
+    return {"notes": query_results}
 
 
 # Note UPDATE
@@ -185,6 +197,16 @@ def create_tag(tag: schemas.TagCreate, db: Session):
 # Tag READ
 def read_tag(tag_id: str, db: Session):
     return db.query(models.Tag).filter(models.Tag.id == tag_id).first()
+
+
+# Tag READ
+def read_duplicate_tag(club_id: int, name: str, db: Session):
+    return (
+        db.query(models.Tag)
+        .filter(models.Tag.slack_club_id == club_id)
+        .filter(models.Tag.name == name)
+        .first()
+    )
 
 
 # Tag READ

@@ -18,6 +18,11 @@ def test_create_read_update_delete_tags(client):
     assert data["name"] == "a new tag name"
     tag_id = data["id"]
 
+    response = api_util.create_tag(slack_club_id=slack_club_id, name="a new tag name")
+    assert response.status_code == 400, response.text
+    data = response.json()
+    assert data["detail"] == "Tag already exists"
+
     response = client.get(f"/tag/{tag_id}")
     assert response.status_code == 200, response.text
     data = response.json()

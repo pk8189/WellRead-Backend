@@ -6,13 +6,14 @@ def test_create_read_update_delete_notes(client):
     api_util.create_team()
     no_user_res = api_util.create_note()
     assert no_user_res.status_code == 400
-    api_util.create_user()
-    no_club_res = api_util.create_note()
+    slack_id_team = "AUSERPATRICK"
+    api_util.create_user(slack_id_team_id=slack_id_team)
+    no_club_res = api_util.create_note(slack_user_id=slack_id_team)
     assert no_club_res.status_code == 400
-    api_util.create_club()
+    club_id = api_util.create_club(admin_user_id=slack_id_team).json()["id"]
     delete_res = client.delete("/note/1/")
     assert delete_res.status_code == 400
-    response = api_util.create_note()
+    response = api_util.create_note(slack_user_id=slack_id_team)
     assert response.status_code == 200, response.text
     data = response.json()
     note_id = data["id"]
@@ -29,6 +30,12 @@ def test_create_read_update_delete_notes(client):
     data = updated_res.json()
     assert data["content"] == "new content"
     assert data["private"] == True
+
+    response = client.get(f"/note/?slack_id_team_id={slack_id_team}&club_id={club_id}")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["notes"][0]["content"] == "new content"
+
     delete_res = client.delete(f"/note/{note_id}/")
     assert delete_res.status_code == 200, delete_res.text
     get_response = client.get(f"/note/{note_id}/")
@@ -36,7 +43,7 @@ def test_create_read_update_delete_notes(client):
     data = get_response.json()
     assert data["detail"] == "Note not found"
 
-    response = api_util.create_note()
+    response = api_util.create_note(slack_user_id=slack_id_team)
     data = response.json()
     note_id = data["id"]
     response = api_util.create_tag()
@@ -51,3 +58,7 @@ def test_create_read_update_delete_notes(client):
     data = response.json()
     assert data["tags"][0]["id"] == tags[0]
     assert data["tags"][1]["id"] == tags[1]
+
+    client.delete(f"/club/1/")
+    get_response = client.get(f"/note/{note_id}/")
+    assert get_response.status_code == 400, get_response.text

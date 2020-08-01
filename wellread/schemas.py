@@ -165,6 +165,10 @@ class Note(NoteBase):
     slack_club: ClubBase
 
 
+class Notes(BaseModel):
+    notes: List[Note]
+
+
 class Tag(TagBase):
     slack_club: ClubBase
     notes: List[NoteBase]

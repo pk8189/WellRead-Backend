@@ -60,8 +60,8 @@ class SlackClub(Base, WellReadBase):
     slack_users = relationship(
         "SlackUser", secondary=slack_club_slack_user_table, back_populates="slack_clubs"
     )
-    notes = relationship("Note", back_populates="slack_club")
-    tags = relationship("Tag", back_populates="slack_club")
+    notes = relationship("Note", back_populates="slack_club", cascade="all, delete")
+    tags = relationship("Tag", back_populates="slack_club", cascade="all, delete")
 
 
 note_tag_table = Table(

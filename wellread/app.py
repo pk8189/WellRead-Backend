@@ -154,6 +154,11 @@ def read_note(note_id: str, db: Session = Depends(get_db)):
     return db_note
 
 
+@app.get("/note/", response_model=schemas.Notes)
+def read_notes(slack_id_team_id: str, club_id: str, db: Session = Depends(get_db)):
+    return crud.read_notes(slack_id_team_id, club_id, db)
+
+
 @app.put("/note/{note_id}/", response_model=schemas.Note)
 def update_note(note_id: str, note: schemas.NoteUpdate, db: Session = Depends(get_db)):
     db_note = crud.read_note(note_id, db)
@@ -190,6 +195,11 @@ def create_tag(tag: schemas.TagCreate, db: Session = Depends(get_db)):
     db_club = crud.read_club(check_params["slack_club_id"], db)
     if db_club is None:
         raise HTTPException(status_code=400, detail="Club ID does not exist")
+    duplicate_tag = crud.read_duplicate_tag(
+        check_params["slack_club_id"], check_params["name"], db,
+    )
+    if duplicate_tag:
+        raise HTTPException(status_code=400, detail="Tag already exists")
     return crud.create_tag(tag, db)
 
 
