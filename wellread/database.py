@@ -10,14 +10,20 @@ load_dotenv()
 PRODUCTION_DB = getenv("PRODUCTION_DB")
 USER = getenv("DB_USERNAME")
 PASSWORD = getenv("DB_PASSWORD")
+DB_HOST = getenv("DB_HOST")
+DB_PORT = getenv("DB_PORT")
+
 if PRODUCTION_DB == "postgres":
-    SQLALCHEMY_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@postgresserver/db"
+    SQLALCHEMY_DATABASE_URL = (
+        f"postgres://{USER}:{PASSWORD}@{DB_HOST}:{DB_PORT}/wellread_db"
+    )
+    engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 else:
     SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, echo=True
+    )
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, echo=True
-)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

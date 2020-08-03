@@ -13,7 +13,7 @@ slack_club_slack_user_table = Table(
         String,
         ForeignKey("slack_users.slack_id_team_id"),
     ),
-    Column("slack_club_id", String, ForeignKey("slack_clubs.id")),
+    Column("slack_club_id", Integer, ForeignKey("slack_clubs.id")),
 )
 
 
@@ -67,8 +67,8 @@ class SlackClub(Base, WellReadBase):
 note_tag_table = Table(
     "note_tag",
     Base.metadata,
-    Column("note_tag", String, ForeignKey("notes.id"),),
-    Column("tag", String, ForeignKey("tags.id")),
+    Column("note_tag", Integer, ForeignKey("notes.id"),),
+    Column("tag", Integer, ForeignKey("tags.id")),
 )
 
 
