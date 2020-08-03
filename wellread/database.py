@@ -1,9 +1,19 @@
+from os import getenv
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
-# SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
+load_dotenv()
+
+PRODUCTION_DB = getenv("PRODUCTION_DB")
+USER = getenv("DB_USERNAME")
+PASSWORD = getenv("DB_PASSWORD")
+if PRODUCTION_DB == "postgres":
+    SQLALCHEMY_DATABASE_URL = f"postgresql://{USER}:{PASSWORD}@postgresserver/db"
+else:
+    SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, echo=True

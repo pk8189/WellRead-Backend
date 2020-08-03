@@ -6,3 +6,6 @@ sql_app.db
 # pytest database
 test.db
 
+# .env file for database settings
+wellread/.env
+
