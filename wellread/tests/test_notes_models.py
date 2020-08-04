@@ -24,12 +24,13 @@ def test_create_read_update_delete_notes(client):
     data = get_response.json()
     assert data["content"] == "Oh my, such a lovely note!"
     updated_res = api_util.update_note(
-        note_id=note_id, content="new content", private=True
+        note_id=note_id, content="new content", private=True, archived=True
     )
     assert updated_res.status_code == 200, updated_res.text
     data = updated_res.json()
     assert data["content"] == "new content"
     assert data["private"] == True
+    assert data["archived"] == True
 
     response = client.get(f"/note/?slack_id_team_id={slack_id_team}&club_id={club_id}")
     assert response.status_code == 200, response.text

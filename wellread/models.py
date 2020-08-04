@@ -39,6 +39,7 @@ class SlackUser(Base, WellReadBase):
     locale = Column(String)  # chosen IETF language code for user
 
     team_id = Column(String, ForeignKey("slack_teams.team_id"), nullable=False)
+
     slack_team = relationship("SlackTeam", back_populates="slack_users")
     slack_clubs = relationship(
         "SlackClub", secondary=slack_club_slack_user_table, back_populates="slack_users"
@@ -57,6 +58,7 @@ class SlackClub(Base, WellReadBase):
     intro_message_ts = Column(String, nullable=True)
 
     admin_user_id = Column(String, ForeignKey("slack_users.slack_id_team_id"))
+
     slack_users = relationship(
         "SlackUser", secondary=slack_club_slack_user_table, back_populates="slack_clubs"
     )
@@ -79,9 +81,11 @@ class Note(Base, WellReadBase):
     create_date = Column(DateTime, default=datetime.datetime.utcnow)
     content = Column(String, index=True)
     private = Column(Boolean, default=False)
+    archived = Column(Boolean, default=False)
 
     slack_user_id = Column(String, ForeignKey("slack_users.slack_id_team_id"))
     slack_club_id = Column(Integer, ForeignKey("slack_clubs.id"))
+
     slack_user = relationship("SlackUser", back_populates="notes")
     slack_club = relationship("SlackClub", back_populates="notes")
     tags = relationship("Tag", secondary=note_tag_table, back_populates="notes")
@@ -93,8 +97,9 @@ class Tag(Base, WellReadBase):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     create_date = Column(DateTime, default=datetime.datetime.utcnow)
+    archived = Column(Boolean, default=False)
 
     slack_club_id = Column(Integer, ForeignKey("slack_clubs.id"))
-    slack_club = relationship("SlackClub", back_populates="tags")
 
+    slack_club = relationship("SlackClub", back_populates="tags")
     notes = relationship("Note", secondary=note_tag_table, back_populates="tags")

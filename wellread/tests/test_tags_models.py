@@ -33,10 +33,11 @@ def test_create_read_update_delete_tags(client):
     data = response.json()
     assert data["tags"][0]["name"] == "a new tag name"
 
-    response = api_util.update_tag(tag_id=tag_id, name="newer name")
+    response = api_util.update_tag(tag_id=tag_id, name="newer name", archived=True)
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["name"] == "newer name"
+    assert data["archived"] == True
 
     client.delete(f"/tag/{tag_id}/")
     response = client.get(f"/tag/{tag_id}/")

@@ -59,7 +59,9 @@ class MockApiRequests:
         body = self.prep_kwargs(locals())
         return self.client.post("/note/", json=body)
 
-    def update_note(self, note_id=1, content="A new type of note!", private=False):
+    def update_note(
+        self, note_id=1, content="A new type of note!", private=False, archived=False
+    ):
         body = self.prep_kwargs(locals())
         return self.client.put(f"/note/{note_id}/", json=body)
 
@@ -76,7 +78,7 @@ class MockApiRequests:
         return self.client.post("/tag/", json=body)
 
     def update_tag(
-        self, name="a new tag name", tag_id=1,
+        self, name="a new tag name", tag_id=1, archived=False,
     ):
         body = self.prep_kwargs(locals())
         return self.client.put(f"/tag/{tag_id}/", json=body)

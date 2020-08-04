@@ -46,6 +46,7 @@ class NoteBase(BaseModel):
     slack_user_id: str
     slack_club_id: int
     private: bool
+    archived: bool
 
     class Config:
         orm_mode = True
@@ -56,6 +57,7 @@ class TagBase(BaseModel):
     name: str
     create_date: datetime
     slack_club_id: int
+    archived: bool
 
     class Config:
         orm_mode = True
@@ -69,6 +71,7 @@ class TagCreate(BaseModel):
 
 class TagUpdate(BaseModel):
     name: str
+    archived: bool
 
 
 class TagDelete(BaseModel):
@@ -86,6 +89,7 @@ class NoteCreate(BaseModel):
 class NoteUpdate(BaseModel):
     content: str
     private: Optional[bool]
+    archived: Optional[bool]
 
 
 class NoteAddTags(BaseModel):
