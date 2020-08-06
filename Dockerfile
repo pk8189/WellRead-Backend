@@ -28,4 +28,4 @@ EXPOSE 8000
 
 USER ${APP_USER}:${APP_USER}
 
-ENTRYPOINT ["uvicorn wellread.app:app --host 0.0.0.0 --port 80]
+ENTRYPOINT ["uvicorn wellread.app:app --host 0.0.0.0 --port 8000]
