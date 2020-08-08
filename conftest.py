@@ -7,8 +7,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from wellread.app import app, get_db
-from wellread.database import Base
+from app.database import Base
+from app.main import app, get_db
 
 # Default to using sqlite in memory for fast tests.
 # Can be overridden by environment variable for testing in CI against other

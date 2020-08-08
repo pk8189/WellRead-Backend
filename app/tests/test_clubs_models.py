@@ -1,4 +1,4 @@
-from wellread.tests import utils
+from app.tests import utils
 
 
 def test_create_get_update_and_delete_club(client):

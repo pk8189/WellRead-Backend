@@ -3,6 +3,9 @@ name = "wellread"
 version = "0.1.0"
 description = "WellRead backend"
 authors = ["pk8189 <pmkelly4444@gmail.com>"]
+packages = [
+    {include = "app"}
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"

@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
 
-from wellread.database import Base, WellReadBase
+from app.database import Base, WellReadBase
 
 slack_club_slack_user_table = Table(
     "slack_club_slack_user",

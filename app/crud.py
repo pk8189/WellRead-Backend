@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from wellread import models, schemas
+from app import models, schemas
 
 
 # SlackTeam CREATE
