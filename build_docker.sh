@@ -1,1 +1,1 @@
-docker build -t pmkelly4444/wellread-backend -f docker/Dockerfile .
+docker build -t pmkelly4444/wellread-backend .
