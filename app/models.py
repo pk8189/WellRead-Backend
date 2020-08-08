@@ -26,6 +26,7 @@ class SlackTeam(Base, WellReadBase):
     email_domain = Column(String, nullable=True)  # email from slack API team object
 
     slack_users = relationship("SlackUser", back_populates="slack_team")
+    slack_clubs = relationship("SlackClub", back_populates="slack_team")
 
 
 class SlackUser(Base, WellReadBase):
@@ -51,14 +52,18 @@ class SlackClub(Base, WellReadBase):
     __tablename__ = "slack_clubs"
 
     id = Column(Integer, primary_key=True, index=True)
-    book_title = Column(String)
-    channel_id = Column(String)
+    book_title = Column(String, nullable=False)
+    channel_id = Column(String, nullable=False)
     create_date = Column(DateTime, default=datetime.datetime.utcnow)
     is_active = Column(Boolean, default=True)
     intro_message_ts = Column(String, nullable=True)
 
-    admin_user_id = Column(String, ForeignKey("slack_users.slack_id_team_id"))
+    team_id = Column(String, ForeignKey("slack_teams.team_id"), nullable=False)
+    admin_user_id = Column(
+        String, ForeignKey("slack_users.slack_id_team_id"), nullable=False
+    )
 
+    slack_team = relationship("SlackTeam", back_populates="slack_clubs")
     slack_users = relationship(
         "SlackUser", secondary=slack_club_slack_user_table, back_populates="slack_clubs"
     )

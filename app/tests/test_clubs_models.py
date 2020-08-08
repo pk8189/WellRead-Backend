@@ -40,6 +40,11 @@ def test_create_get_update_and_delete_club(client):
     assert data["book_title"] == new_book_title
     assert data["intro_message_ts"] == intro_message_ts
 
+    team_id = "T0140PRK962"
+    response = client.get(f"/team/{team_id}/")
+    data = response.json()
+    assert data["slack_clubs"][0]["id"] == club_id
+
     user_2 = "ALKAFKLJSDFKLJ"
     api_util.create_user(
         slack_id_team_id=user_2, name="User 2", team_id=team_id,

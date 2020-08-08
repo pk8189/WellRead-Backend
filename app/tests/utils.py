@@ -46,6 +46,7 @@ class MockApiRequests:
         book_title="A merry book",
         admin_user_id="U014YSCLQ2X_T0140PRK962",  # default user in tests
         channel_id="19WEWFJEW1425W",
+        team_id="T0140PRK962",
     ):
         body = self.prep_kwargs(locals())
         return self.client.post("/club/", json=body,)

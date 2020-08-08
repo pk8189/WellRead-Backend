@@ -33,6 +33,7 @@ class ClubBase(BaseModel):
     create_date: datetime
     is_active: bool
     admin_user_id: str
+    team_id: str
     intro_message_ts: Optional[str] = None
 
     class Config:
@@ -105,6 +106,7 @@ class ClubCreate(BaseModel):
     book_title: str
     channel_id: str
     admin_user_id: str
+    team_id: str
 
 
 class ClubUpdate(BaseModel):
@@ -147,6 +149,7 @@ class TeamDelete(BaseModel):
 # Main references to models via schemas
 class Team(TeamBase):
     slack_users: List[UserBase]
+    slack_clubs: List[ClubBase]
 
 
 class User(UserBase):
