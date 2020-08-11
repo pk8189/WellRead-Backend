@@ -16,37 +16,18 @@ class MockApiRequests:
         return copied_locals
 
     def create_user(
-        self,
-        slack_id_team_id="U014YSCLQ2X_T0140PRK962",
-        name="Patrick M Kelly",
-        tz="Eastern Daylight Time",
-        locale="en-US",
-        team_id="T0140PRK962",
+        self, full_name="Patrick M Kelly", email="pmkelly4444@gmail.com",
     ):
         body = self.prep_kwargs(locals())
         return self.client.post("/user/", json=body,)
 
     def update_user(
-        self, slack_id_team_id: str, **kwargs,
+        self, id: int, **kwargs,
     ):
-        return self.client.put(f"/user/{slack_id_team_id}/", json=kwargs,)
-
-    def create_team(
-        self,
-        team_id="T0140PRK962",
-        name="WellRead",
-        domain="www.domain.com",
-        email_domain="",
-    ):
-        body = self.prep_kwargs(locals())
-        return self.client.post("/team/", json=body,)
+        return self.client.put(f"/user/{id}/", json=kwargs,)
 
     def create_club(
-        self,
-        book_title="A merry book",
-        admin_user_id="U014YSCLQ2X_T0140PRK962",  # default user in tests
-        channel_id="19WEWFJEW1425W",
-        team_id="T0140PRK962",
+        self, book_title="A merry book", admin_user_id=1,  # default user in tests
     ):
         body = self.prep_kwargs(locals())
         return self.client.post("/club/", json=body,)
@@ -54,8 +35,8 @@ class MockApiRequests:
     def create_note(
         self,
         content="Oh my, such a lovely note!",
-        slack_user_id="U014YSCLQ2X_T0140PRK962",  # default user in tests
-        slack_club_id=1,
+        user_id=1,  # default user in tests
+        club_id=1,
     ):
         body = self.prep_kwargs(locals())
         return self.client.post("/note/", json=body)
@@ -73,7 +54,7 @@ class MockApiRequests:
         return self.client.put(f"/note/{note_id}/tag/", json=body)
 
     def create_tag(
-        self, name="taggy boy", slack_club_id=1,
+        self, name="taggy boy", club_id=1,
     ):
         body = self.prep_kwargs(locals())
         return self.client.post("/tag/", json=body)

@@ -3,7 +3,6 @@ from app.tests import utils
 
 def test_create_read_update_delete_tags(client):
     api_util = utils.MockApiRequests(client)
-    api_util.create_team()
     api_util.create_user()
 
     response = api_util.create_tag()
@@ -11,14 +10,14 @@ def test_create_read_update_delete_tags(client):
     assert response.status_code == 400, response.text
     assert data["detail"] == "Club ID does not exist"
 
-    slack_club_id = api_util.create_club().json()["id"]
-    response = api_util.create_tag(slack_club_id=slack_club_id, name="a new tag name")
+    club_id = api_util.create_club().json()["id"]
+    response = api_util.create_tag(club_id=club_id, name="a new tag name")
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["name"] == "a new tag name"
     tag_id = data["id"]
 
-    response = api_util.create_tag(slack_club_id=slack_club_id, name="a new tag name")
+    response = api_util.create_tag(club_id=club_id, name="a new tag name")
     assert response.status_code == 400, response.text
     data = response.json()
     assert data["detail"] == "Tag already exists"
@@ -28,7 +27,7 @@ def test_create_read_update_delete_tags(client):
     data = response.json()
     assert data["name"] == "a new tag name"
 
-    response = client.get(f"/tag/?club_id={slack_club_id}")
+    response = client.get(f"/tag/?club_id={club_id}")
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["tags"][0]["name"] == "a new tag name"

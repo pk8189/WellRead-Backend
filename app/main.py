@@ -19,64 +19,27 @@ def get_db():
         db.close()  # pylint: disable=no-member
 
 
-@app.post("/team/", response_model=schemas.Team)
-def create_team(team: schemas.TeamCreate, db: Session = Depends(get_db)):
-    db_team = crud.read_team(team.team_id, db)
-    if db_team:
-        raise HTTPException(status_code=400, detail="Team already exists")
-    return crud.create_team(team, db)
-
-
-@app.get("/team/{team_id}/", response_model=schemas.Team)
-def read_team(team_id: str, db: Session = Depends(get_db)):
-    db_team = crud.read_team(team_id, db)
-    if db_team is None:
-        raise HTTPException(status_code=400, detail="Team not found")
-    return db_team
-
-
-@app.delete("/team/{team_id}/", response_model=schemas.TeamDelete)
-def delete_team(team_id: str, db: Session = Depends(get_db)):
-    deleted_team = crud.delete_team(team_id, db)
-    if deleted_team is None:
-        raise HTTPException(
-            status_code=400, detail="Team not deleted, it was not found"
-        )
-    return deleted_team
-
-
 @app.post("/user/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = crud.read_user(user.slack_id_team_id, db)
-    if db_user:
-        raise HTTPException(status_code=400, detail="User already exists")
-    db_team = crud.read_team(user.team_id, db)
-    if not db_team:
-        raise HTTPException(
-            status_code=400,
-            detail=f"No team exists for specified team_id: {user.team_id}",
-        )
     return crud.create_user(user, db)
 
 
-@app.get("/user/{slack_id_team_id}/", response_model=schemas.User)
-def read_user(slack_id_team_id: str, db: Session = Depends(get_db)):
-    db_user = crud.read_user(slack_id_team_id, db)
+@app.get("/user/{id}/", response_model=schemas.User)
+def read_user(id: str, db: Session = Depends(get_db)):
+    db_user = crud.read_user(id, db)
     if db_user is None:
         raise HTTPException(status_code=400, detail="User not found")
     return db_user
 
 
-@app.put("/user/{slack_id_team_id}/", response_model=schemas.User)
-def update_user(
-    slack_id_team_id: str, user: schemas.UserUpdate, db: Session = Depends(get_db)
-):
-    return crud.update_user(slack_id_team_id, user, db)
+@app.put("/user/{id}/", response_model=schemas.User)
+def update_user(id: str, user: schemas.UserUpdate, db: Session = Depends(get_db)):
+    return crud.update_user(id, user, db)
 
 
-@app.delete("/user/{slack_id_team_id}/", response_model=schemas.UserDelete)
-def delete_user(slack_id_team_id: str, db: Session = Depends(get_db)):
-    deleted_user = crud.delete_user(slack_id_team_id, db)
+@app.delete("/user/{id}/", response_model=schemas.UserDelete)
+def delete_user(id: str, db: Session = Depends(get_db)):
+    deleted_user = crud.delete_user(id, db)
     if deleted_user is None:
         raise HTTPException(status_code=400, detail="User not deleted, user not found")
     return deleted_user
@@ -99,9 +62,9 @@ def read_club(club_id: str, db: Session = Depends(get_db)):
 
 
 @app.get("/club/", response_model=schemas.Clubs)
-def read_clubs(slack_id_team_id: Optional[str] = None, db: Session = Depends(get_db)):
-    if slack_id_team_id:
-        return crud.read_clubs(db, slack_id_team_id=slack_id_team_id)
+def read_clubs(user_id: Optional[str] = None, db: Session = Depends(get_db)):
+    if user_id:
+        return crud.read_clubs(db, user_id=user_id)
     return crud.read_clubs(db)
 
 
@@ -111,17 +74,15 @@ def update_club(club_id: str, club: schemas.ClubUpdate, db: Session = Depends(ge
     return db_club
 
 
-@app.put("/club/{club_id}/add_user/{slack_id_team_id}/", response_model=schemas.Club)
-def add_user_to_club(
-    club_id: str, slack_id_team_id: str, db: Session = Depends(get_db)
-):
-    db_user = crud.read_user(slack_id_team_id, db)
+@app.put("/club/{club_id}/add_user/{user_id}/", response_model=schemas.Club)
+def add_user_to_club(club_id: int, user_id: int, db: Session = Depends(get_db)):
+    db_user = crud.read_user(user_id, db)
     if db_user is None:
         raise HTTPException(status_code=400, detail="User not found")
     db_club = crud.read_club(club_id, db)
     if db_club is None:
         raise HTTPException(status_code=400, detail="Club not found")
-    new_db_club = crud.add_user_to_club(club_id, slack_id_team_id, db)
+    new_db_club = crud.add_user_to_club(club_id, user_id, db)
     return new_db_club
 
 
@@ -136,8 +97,8 @@ def delete_club(club_id: str, db: Session = Depends(get_db)):
 @app.post("/note/", response_model=schemas.Note)
 def create_note(note: schemas.NoteCreate, db: Session = Depends(get_db)):
     check_params = note.dict()
-    db_user = crud.read_user(check_params["slack_user_id"], db)
-    db_club = crud.read_club(check_params["slack_club_id"], db)
+    db_user = crud.read_user(check_params["user_id"], db)
+    db_club = crud.read_club(check_params["club_id"], db)
     if db_user is None:
         raise HTTPException(status_code=400, detail="User ID does not exist")
     if db_club is None:
@@ -155,8 +116,8 @@ def read_note(note_id: str, db: Session = Depends(get_db)):
 
 
 @app.get("/note/", response_model=schemas.Notes)
-def read_notes(slack_id_team_id: str, club_id: str, db: Session = Depends(get_db)):
-    return crud.read_notes(slack_id_team_id, club_id, db)
+def read_notes(user_id: str, club_id: str, db: Session = Depends(get_db)):
+    return crud.read_notes(user_id, club_id, db)
 
 
 @app.put("/note/{note_id}/", response_model=schemas.Note)
@@ -192,11 +153,11 @@ def delete_note(note_id: str, db: Session = Depends(get_db)):
 @app.post("/tag/", response_model=schemas.Tag)
 def create_tag(tag: schemas.TagCreate, db: Session = Depends(get_db)):
     check_params = tag.dict()
-    db_club = crud.read_club(check_params["slack_club_id"], db)
+    db_club = crud.read_club(check_params["club_id"], db)
     if db_club is None:
         raise HTTPException(status_code=400, detail="Club ID does not exist")
     duplicate_tag = crud.read_duplicate_tag(
-        check_params["slack_club_id"], check_params["name"], db,
+        check_params["club_id"], check_params["name"], db,
     )
     if duplicate_tag:
         raise HTTPException(status_code=400, detail="Tag already exists")

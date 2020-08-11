@@ -3,24 +3,13 @@ from typing import List, Optional
 
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
-
 # Base models which map to the sqlalchemy ORM
-class TeamBase(BaseModel):
-    team_id: str
-    name: Optional[str] = None
-    domain: Optional[str] = None
-    email_domain: Optional[str] = None
-
-    class Config:
-        orm_mode = True
 
 
 class UserBase(BaseModel):
-    slack_id_team_id: str
-    name: str
-    tz: str
-    locale: str
-    team_id: str
+    id: int
+    full_name: str
+    email: str
 
     class Config:
         orm_mode = True
@@ -29,12 +18,9 @@ class UserBase(BaseModel):
 class ClubBase(BaseModel):
     id: int
     book_title: str
-    channel_id: str
     create_date: datetime
     is_active: bool
-    admin_user_id: str
-    team_id: str
-    intro_message_ts: Optional[str] = None
+    admin_user_id: int
 
     class Config:
         orm_mode = True
@@ -44,8 +30,8 @@ class NoteBase(BaseModel):
     id: int
     create_date: datetime
     content: str
-    slack_user_id: str
-    slack_club_id: int
+    user_id: int
+    club_id: int
     private: bool
     archived: bool
 
@@ -57,7 +43,7 @@ class TagBase(BaseModel):
     id: int
     name: str
     create_date: datetime
-    slack_club_id: int
+    club_id: int
     archived: bool
 
     class Config:
@@ -67,7 +53,7 @@ class TagBase(BaseModel):
 # Tag schemas
 class TagCreate(BaseModel):
     name: str
-    slack_club_id: int
+    club_id: int
 
 
 class TagUpdate(BaseModel):
@@ -82,8 +68,8 @@ class TagDelete(BaseModel):
 # Note schemas
 class NoteCreate(BaseModel):
     content: str
-    slack_user_id: str
-    slack_club_id: int
+    user_id: int
+    club_id: int
     private: Optional[bool]
 
 
@@ -104,61 +90,39 @@ class NoteDelete(BaseModel):
 # Club schemas
 class ClubCreate(BaseModel):
     book_title: str
-    channel_id: str
-    admin_user_id: str
-    team_id: str
+    admin_user_id: int
 
 
 class ClubUpdate(BaseModel):
     book_title: Optional[str] = None
-    channel_id: Optional[str] = None
     is_active: Optional[bool] = None
-    intro_message_ts: Optional[str] = None
 
 
 class ClubDelete(BaseModel):
     id: str
 
 
-class UserCreate(UserBase):
-    pass
+class UserCreate(BaseModel):
+    full_name: str
+    email: str
 
 
 class UserUpdate(BaseModel):
-    name: Optional[str] = None
-    locale: Optional[str] = None
-    tz: Optional[str] = None
+    full_name: Optional[str] = None
+    email: Optional[str] = None
 
 
 class UserDelete(BaseModel):
-    slack_id_team_id: str
-
-
-# Team schemas
-class TeamCreate(TeamBase):
-    team_id: str
-    name: Optional[str] = None
-    domain: Optional[str] = None
-    email_domain: Optional[str] = None
-
-
-class TeamDelete(BaseModel):
-    team_id: str
-
-
-# Main references to models via schemas
-class Team(TeamBase):
-    slack_users: List[UserBase]
-    slack_clubs: List[ClubBase]
+    id: int
 
 
 class User(UserBase):
-    slack_clubs: List[ClubBase]
+    clubs: List[ClubBase]
     notes: List[NoteBase]
 
 
 class Club(ClubBase):
-    slack_users: List[UserBase]
+    users: List[UserBase]
     tags: List[TagBase]
 
 
@@ -168,8 +132,8 @@ class Clubs(BaseModel):
 
 class Note(NoteBase):
     tags: List[TagBase]
-    slack_user: UserBase
-    slack_club: ClubBase
+    user: UserBase
+    club: ClubBase
 
 
 class Notes(BaseModel):
@@ -177,7 +141,7 @@ class Notes(BaseModel):
 
 
 class Tag(TagBase):
-    slack_club: ClubBase
+    club: ClubBase
     notes: List[NoteBase]
 
 

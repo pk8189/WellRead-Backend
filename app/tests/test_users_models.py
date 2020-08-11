@@ -2,40 +2,32 @@ from app.tests import utils
 
 
 def test_create_get_and_update_user(client):
-    team_id = "T0140PRK962"
     api_util = utils.MockApiRequests(client)
-    response = api_util.create_user(team_id=team_id)
-    assert response.status_code == 400, response.text
-    data = response.json()
-    assert data["detail"] == f"No team exists for specified team_id: {team_id}"
 
-    response = api_util.create_team(team_id=team_id)
-    assert response.status_code == 200, response.text
-
-    response = api_util.create_user(team_id=team_id)
+    response = api_util.create_user()
     assert response.status_code == 200, response.text
     data = response.json()
-    slack_id_team_id = data["slack_id_team_id"]
-    assert slack_id_team_id == "U014YSCLQ2X_T0140PRK962"
-    assert data["name"] == "Patrick M Kelly"
+    user_id = data["id"]
+    assert user_id == 1
+    assert data["full_name"] == "Patrick M Kelly"
 
-    response = client.get(f"/user/{slack_id_team_id}/")
+    response = client.get(f"/user/{user_id}/")
     assert response.status_code == 200, response.text
     data = response.json()
-    assert data["name"] == "Patrick M Kelly"
-    assert data["slack_id_team_id"] == "U014YSCLQ2X_T0140PRK962"
+    assert data["full_name"] == "Patrick M Kelly"
+    assert data["id"] == 1
 
     my_new_name = "Not Patrick Anymore!"
-    response = api_util.update_user(slack_id_team_id, name=my_new_name)
+    response = api_util.update_user(user_id, full_name=my_new_name)
     assert response.status_code == 200, response.text
     data = response.json()
-    assert data["name"] == my_new_name
+    assert data["full_name"] == my_new_name
 
-    response = client.delete(f"/user/{slack_id_team_id}/")
+    response = client.delete(f"/user/{user_id}/")
     assert response.status_code == 200, response.text
     data = response.json()
-    assert data["slack_id_team_id"] == slack_id_team_id
-    response = client.get(f"/user/{slack_id_team_id}/")
+    assert data["id"] == 1
+    response = client.get(f"/user/{id}/")
     data = response.json()
     assert response.status_code == 400, response.text
     assert data["detail"] == "User not found"

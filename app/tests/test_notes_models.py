@@ -3,17 +3,15 @@ from app.tests import utils
 
 def test_create_read_update_delete_notes(client):
     api_util = utils.MockApiRequests(client)
-    api_util.create_team()
     no_user_res = api_util.create_note()
     assert no_user_res.status_code == 400
-    slack_id_team = "AUSERPATRICK"
-    api_util.create_user(slack_id_team_id=slack_id_team)
-    no_club_res = api_util.create_note(slack_user_id=slack_id_team)
+    api_util.create_user()
+    no_club_res = api_util.create_note(user_id=1)
     assert no_club_res.status_code == 400
-    club_id = api_util.create_club(admin_user_id=slack_id_team).json()["id"]
+    club_id = api_util.create_club(admin_user_id=1).json()["id"]
     delete_res = client.delete("/note/1/")
     assert delete_res.status_code == 400
-    response = api_util.create_note(slack_user_id=slack_id_team)
+    response = api_util.create_note(user_id=1)
     assert response.status_code == 200, response.text
     data = response.json()
     note_id = data["id"]
@@ -32,7 +30,7 @@ def test_create_read_update_delete_notes(client):
     assert data["private"] == True
     assert data["archived"] == True
 
-    response = client.get(f"/note/?slack_id_team_id={slack_id_team}&club_id={club_id}")
+    response = client.get(f"/note/?user_id={1}&club_id={club_id}")
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["notes"][0]["content"] == "new content"
@@ -44,7 +42,7 @@ def test_create_read_update_delete_notes(client):
     data = get_response.json()
     assert data["detail"] == "Note not found"
 
-    response = api_util.create_note(slack_user_id=slack_id_team)
+    response = api_util.create_note(user_id=1)
     data = response.json()
     note_id = data["id"]
     response = api_util.create_tag()
