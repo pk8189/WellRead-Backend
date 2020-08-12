@@ -3,6 +3,12 @@ from typing import List, Optional
 
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
 # Base models which map to the sqlalchemy ORM
 
 
@@ -61,8 +67,8 @@ class TagUpdate(BaseModel):
     archived: bool
 
 
-class TagDelete(BaseModel):
-    id: int
+class TagDelete(TagBase):
+    pass
 
 
 # Note schemas
@@ -83,14 +89,13 @@ class NoteAddTags(BaseModel):
     tags: List[int]
 
 
-class NoteDelete(BaseModel):
-    id: int
+class NoteDelete(NoteBase):
+    pass
 
 
 # Club schemas
 class ClubCreate(BaseModel):
     book_title: str
-    admin_user_id: int
 
 
 class ClubUpdate(BaseModel):
@@ -98,22 +103,19 @@ class ClubUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
-class ClubDelete(BaseModel):
-    id: str
+class ClubDelete(ClubBase):
+    pass
 
 
 class UserCreate(BaseModel):
     full_name: str
     email: str
+    password: str
 
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     email: Optional[str] = None
-
-
-class UserDelete(BaseModel):
-    id: int
 
 
 class User(UserBase):

@@ -19,6 +19,7 @@ class User(Base, WellReadBase):
     id = Column(Integer, primary_key=True, index=True)
     full_name = Column(String)
     email = Column(String)
+    hashed_password = Column(String)
 
     clubs = relationship("Club", secondary=club_user_table, back_populates="users")
     notes = relationship("Note", back_populates="user")
@@ -32,7 +33,7 @@ class Club(Base, WellReadBase):
     create_date = Column(DateTime, default=datetime.datetime.utcnow)
     is_active = Column(Boolean, default=True)
 
-    admin_user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    admin_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     users = relationship("User", secondary=club_user_table, back_populates="clubs")
     notes = relationship("Note", back_populates="club", cascade="all, delete")
@@ -56,7 +57,7 @@ class Note(Base, WellReadBase):
     private = Column(Boolean, default=False)
     archived = Column(Boolean, default=False)
 
-    user_id = Column(String, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
     club_id = Column(Integer, ForeignKey("clubs.id"))
 
     user = relationship("User", back_populates="notes")

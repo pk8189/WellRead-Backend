@@ -1,11 +1,20 @@
 from sqlalchemy.orm import Session
 
-from app import models, schemas
+from app import auth_utils, models, schemas
+
+
+# User AUTH
+def get_user_auth(email: str, db: Session):
+    return db.query(models.User).filter(models.User.email == email).first()
 
 
 # User CREATE
 def create_user(user: schemas.UserCreate, db: Session):
-    db_user = models.User(**user.dict())
+    user_dict = user.dict()
+    password = user_dict["password"]
+    user_dict["hashed_password"] = auth_utils.get_password_hash(password)
+    del user_dict["password"]
+    db_user = models.User(**user_dict)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -15,6 +24,11 @@ def create_user(user: schemas.UserCreate, db: Session):
 # User READ
 def read_user(id: str, db: Session):
     return db.query(models.User).filter(models.User.id == id).first()
+
+
+# User READ
+def get_user_by_email(email: str, db: Session):
+    return db.query(models.User).filter(models.User.email == email).first()
 
 
 # User UPDATE
@@ -27,16 +41,13 @@ def update_user(id: str, user: schemas.UserUpdate, db: Session):
     return db_user
 
 
-# User DELETE
-def delete_user(id: str, db: Session):
-    db.query(models.User).filter(models.User.id == id).delete()
-    db.commit()
-    return {"id": id}
-
-
 # Club CREATE
-def create_club(club: schemas.ClubCreate, db: Session):
-    db_club = models.Club(**club.dict())
+def create_club(user_id: int, club: schemas.ClubCreate, db: Session):
+    club_dict = club.dict()
+    club_dict["admin_user_id"] = user_id
+    db_club = models.Club(**club_dict)
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    db_club.users.append(db_user)
     db.add(db_club)
     db.commit()
     db.refresh(db_club)
@@ -44,14 +55,17 @@ def create_club(club: schemas.ClubCreate, db: Session):
 
 
 # Club READ
-def read_club(club_id: str, db: Session):
-    return db.query(models.Club).filter(models.Club.id == club_id).first()
+def read_club(user_id: int, club_id: int, db: Session):
+    return (
+        db.query(models.Club)
+        .filter(models.Club.id == club_id)
+        .filter(models.Club.users.any(models.User.id == user_id))
+        .first()
+    )
 
 
 # Club READ
 def read_clubs(db: Session, user_id: int = None):
-    if not user_id:
-        return {"clubs": db.query(models.Club).all()}
     query_results = (
         db.query(models.Club)
         .filter(models.Club.users.any(models.User.id == user_id))
@@ -85,7 +99,7 @@ def delete_club(club_id: str, db: Session):
     db_club = db.query(models.Club).filter(models.Club.id == club_id).first()
     db.delete(db_club)
     db.commit()
-    return {"id": club_id}
+    return db_club
 
 
 # Note CREATE
@@ -98,24 +112,24 @@ def create_note(note: schemas.NoteCreate, db: Session):
 
 
 # Note READ
-def read_note(note_id: str, db: Session):
+def read_note(note_id: int, db: Session):
     return db.query(models.Note).filter(models.Note.id == note_id).first()
 
 
 # Note READ
-def read_notes(id: str, club_id: str, db: Session):
-    query_results = (
-        db.query(models.Note)
-        .filter(models.Note.user_id == id)
-        .filter(models.Note.club_id == club_id)
-        .all()
-    )
+def read_notes(club_id: int, db: Session):
+    query_results = db.query(models.Note).filter(models.Note.club_id == club_id).all()
     return {"notes": query_results}
 
 
 # Note UPDATE
-def update_note(note_id: str, note: schemas.NoteUpdate, db: Session):
-    db_note = db.query(models.Note).filter(models.Note.id == note_id).first()
+def update_note(user_id: int, note_id: int, note: schemas.NoteUpdate, db: Session):
+    db_note = (
+        db.query(models.Note)
+        .filter(models.Note.id == note_id)
+        .filter(models.Note.user_id == user_id)
+        .first()
+    )
     remove_nones = {k: v for k, v in note.dict().items() if v is not None}
     db_note.update(remove_nones)
     db.commit()
@@ -124,8 +138,13 @@ def update_note(note_id: str, note: schemas.NoteUpdate, db: Session):
 
 
 # Note UPDATE
-def add_tags_to_note(note_id: str, tag_ids: list, db: Session):
-    db_note = db.query(models.Note).filter(models.Note.id == note_id).first()
+def add_tags_to_note(user_id: int, note_id: int, tag_ids: list, db: Session):
+    db_note = (
+        db.query(models.Note)
+        .filter(models.Note.id == note_id)
+        .filter(models.Note.user_id == user_id)
+        .first()
+    )
     for tag_id in tag_ids:
         db_tag = db.query(models.Tag).filter(models.Tag.id == tag_id).first()
         db_note.tags.append(db_tag)
@@ -136,10 +155,16 @@ def add_tags_to_note(note_id: str, tag_ids: list, db: Session):
 
 
 # Note DELETE
-def delete_note(note_id: str, db: Session):
-    db.query(models.Note).filter(models.Note.id == note_id).delete()
+def delete_note(user_id: int, note_id: int, db: Session):
+    db_note = (
+        db.query(models.Note)
+        .filter(models.Note.user_id == user_id)
+        .filter(models.Note.id == note_id)
+        .first()
+    )
+    db.delete(db_note)
     db.commit()
-    return {"id": note_id}
+    return db_note
 
 
 # Tag CREATE
@@ -184,6 +209,7 @@ def update_tag(tag_id: str, tag: schemas.TagUpdate, db: Session):
 
 # Tag DELETE
 def delete_tag(tag_id: str, db: Session):
-    db.query(models.Tag).filter(models.Tag.id == tag_id).delete()
+    db_tag = db.query(models.Tag).filter(models.Tag.id == tag_id).first()
+    db.delete(db_tag)
     db.commit()
-    return {"id": tag_id}
+    return db_tag
