@@ -1,9 +1,9 @@
-from app.tests import utils
+from app.integration_tests import utils
 
 
 def test_create_read_update_delete_tags(client):
     api_util = utils.MockApiRequests(client)
-    api_util.create_user()
+    api_util.create_user_and_authenticate()  # creates a user and authenticates the client
 
     response = api_util.create_tag()
     data = response.json()
@@ -20,7 +20,7 @@ def test_create_read_update_delete_tags(client):
     response = api_util.create_tag(club_id=club_id, name="a new tag name")
     assert response.status_code == 400, response.text
     data = response.json()
-    assert data["detail"] == "Tag already exists"
+    assert data["detail"] == "Tag with this name already exists"
 
     response = client.get(f"/tag/{tag_id}")
     assert response.status_code == 200, response.text

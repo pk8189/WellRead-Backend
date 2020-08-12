@@ -74,7 +74,6 @@ class TagDelete(TagBase):
 # Note schemas
 class NoteCreate(BaseModel):
     content: str
-    user_id: int
     club_id: int
     private: Optional[bool]
 

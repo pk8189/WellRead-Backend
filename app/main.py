@@ -62,7 +62,7 @@ def create_user(
 
 @app.get("/user/", response_model=schemas.User)
 def read_user(
-    user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)
+    user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db),
 ):
     db_user = crud.read_user(user.id, db)
     if db_user is None:
@@ -104,7 +104,7 @@ def read_club(
 def read_clubs(
     db: Session = Depends(get_db), user: schemas.User = Depends(get_current_user),
 ):
-    return crud.read_clubs(db, user_id=user.id)
+    return crud.read_clubs(user.id, db)
 
 
 @app.put("/club/{club_id}/", response_model=schemas.Club)
@@ -126,7 +126,7 @@ def user_join(
     db_user = crud.read_user(user.id, db)
     if db_user is None:
         raise HTTPException(status_code=400, detail="User not found")
-    db_club = crud.read_club(user.id, club_id, db)
+    db_club = crud.read_clubs_for_joining(club_id, db)
     if db_club is None:
         raise HTTPException(status_code=400, detail="Club not found")
     new_db_club = crud.add_user_to_club(club_id, user.id, db)
@@ -142,11 +142,13 @@ def delete_club(
     db_club = crud.read_club(user.id, club_id, db)
     if db_club.admin_user_id != user.id:
         raise HTTPException(
-            status_code=400, detail="Club not deleted, user is not admin"
+            status_code=400, detail="Club not deleted, user is not admin",
         )
     deleted_club = crud.delete_club(club_id, db)
     if delete_club is None:
-        raise HTTPException(status_code=400, detail="Club not deleted, club not found")
+        raise HTTPException(
+            status_code=400, detail="Club not deleted, club not found",
+        )
     return deleted_club
 
 
@@ -161,7 +163,7 @@ def create_note(
     if db_club is None:
         raise HTTPException(status_code=400, detail="Club ID does not exist")
 
-    return crud.create_note(note, db)
+    return crud.create_note(user.id, note, db)
 
 
 @app.get("/note/{note_id}/", response_model=schemas.Note)
@@ -176,7 +178,7 @@ def read_note(
     return db_note
 
 
-@app.get("/note/", response_model=schemas.Notes)
+@app.get("/note/", response_model=schemas.Notes)  # TODO: permissions
 def read_notes(
     club_id: int,
     db: Session = Depends(get_db),

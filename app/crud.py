@@ -65,13 +65,21 @@ def read_club(user_id: int, club_id: int, db: Session):
 
 
 # Club READ
-def read_clubs(db: Session, user_id: int = None):
+def read_clubs(
+    user_id: int, db: Session,
+):
     query_results = (
         db.query(models.Club)
         .filter(models.Club.users.any(models.User.id == user_id))
         .all()
     )
     return {"clubs": query_results}
+
+
+# Club READ
+def read_clubs_for_joining(club_id: int, db: Session):
+    # TODO permissions for invited users
+    return db.query(models.Club).filter(models.Club.id == club_id).first()
 
 
 # Club UPDATE
@@ -103,8 +111,10 @@ def delete_club(club_id: str, db: Session):
 
 
 # Note CREATE
-def create_note(note: schemas.NoteCreate, db: Session):
-    db_note = models.Note(**note.dict())
+def create_note(user_id: int, note: schemas.NoteCreate, db: Session):
+    note_dict = note.dict()
+    note_dict["user_id"] = user_id
+    db_note = models.Note(**note_dict)
     db.add(db_note)
     db.commit()
     db.refresh(db_note)

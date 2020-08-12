@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 DEFAULT_EMAIL = "pmkelly4444@gmail.com"
 DEFAULT_PASSWORD = "string"
 
+
 class MockApiRequests:
     """
     API TestClient class with mock requests with kwargs
@@ -11,19 +12,25 @@ class MockApiRequests:
 
     def __init__(self, client: TestClient):
         self.client = client
-        self.client.headers.update(
-            {"Authorization": f"Bearer {self.create_user_and_authenticate_client()}"}
-        )
 
-    def create_user_and_authenticate_client(self):
+    def create_user_and_authenticate(self):
         self.create_user()
-        res = self.client.post(
-            "/token",
-            data={"username": DEFAULT_EMAIL, "password": DEFAULT_PASSWORD}
-        )
-        token = res.json()["access_token"]
-        return token
+        return self.authenticate()
 
+    def create_user2_and_authenticate(self):
+        self.create_user(
+            email="anotheruser@gmail.com",
+            password="password2",
+            full_name="Patrick Star",
+        )
+        return self.authenticate(email="anotheruser@gmail.com", password="password2",)
+
+    def authenticate(
+        self, email: str = DEFAULT_EMAIL, password: str = DEFAULT_PASSWORD
+    ):
+        res = self.client.post("/token", data={"username": email, "password": password})
+        token = res.json()["access_token"]
+        return self.client.headers.update({"Authorization": f"Bearer {token}"})
 
     def prep_kwargs(self, locals: dict) -> dict:
         copied_locals = locals.copy()
@@ -34,7 +41,7 @@ class MockApiRequests:
         self,
         full_name="Patrick M Kelly",
         email=DEFAULT_EMAIL,
-        password=DEFAULT_PASSWORD
+        password=DEFAULT_PASSWORD,
     ):
         body = self.prep_kwargs(locals())
         return self.client.post("/user/", json=body,)
@@ -42,43 +49,23 @@ class MockApiRequests:
     def update_user(
         self, **kwargs,
     ):
-        return self.client.put(
-            f"/user/",
-            json=kwargs,
-        )
+        return self.client.put(f"/user/", json=kwargs,)
 
-    def create_club(
-        self, token, book_title="A merry book"
-    ):
+    def create_club(self, book_title="A merry book"):
         body = self.prep_kwargs(locals())
-        return self.client.post(
-            "/club/",
-            headers={"Authorization": f"Bearer {token}"},
-            json=body,
-        )
+        return self.client.post("/club/", json=body,)
 
     def create_note(
-        self,
-        token,
-        content="Oh my, such a lovely note!",
-        club_id=1,
+        self, content="Oh my, such a lovely note!", club_id=1,
     ):
         body = self.prep_kwargs(locals())
-        return self.client.post(
-            "/note/",
-            headers={"Authorization": f"Bearer {token}"},
-            json=body,
-        )
+        return self.client.post("/note/", json=body,)
 
     def update_note(
-        self, token, note_id=1, content="A new type of note!", private=False, archived=False
+        self, note_id=1, content="A new type of note!", private=False, archived=False
     ):
         body = self.prep_kwargs(locals())
-        return self.client.put(
-            f"/note/{note_id}/",
-            headers={"Authorization": f"Bearer {token}"},
-            json=body,
-        )
+        return self.client.put(f"/note/{note_id}/", json=body,)
 
     def add_tags_to_note(
         self, note_id=1, tags=[1],

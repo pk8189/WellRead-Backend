@@ -9,9 +9,8 @@ def test_create_get_and_update_user(client):
     assert unauthenticated_res.status_code == 401, unauthenticated_res.text
     assert unauthenticated_res.json()["detail"] == "Not authenticated"
 
-    api_util = utils.MockApiRequests(
-        client
-    )  # creates a user and authenticates the client
+    api_util = utils.MockApiRequests(client)
+    api_util.create_user_and_authenticate()  # creates a user and authenticates the client
 
     response = client.get("/user/")
     assert response.status_code == 200, response.text
