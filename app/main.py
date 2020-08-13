@@ -221,13 +221,13 @@ def add_tags_to_notes(
 ):
     db_note = crud.read_note(user.id, note_id, db)
     for tag in tags.tags:
-        db_tag = crud.read_tag(tag, db)
+        db_tag = crud.read_tag(user.id, tag, db)
         if db_tag is None:
             raise HTTPException(status_code=400, detail="Tag not found")
     if db_note is None:
         raise HTTPException(status_code=400, detail="Note not found")
     if db_note.user_id != user.id:
-        raise HTTPException(status_code=400, detail="Not authorized to tag note")
+        raise HTTPException(status_code=403, detail="Not authorized to tag note")
     return crud.add_tags_to_note(user.id, note_id, tags.tags, db)
 
 
@@ -241,7 +241,7 @@ def delete_note(
     if db_note is None:
         raise HTTPException(status_code=400, detail="Note not found")
     if db_note.user_id != user.id:
-        raise HTTPException(status_code=400, detail="Not authorized to delete note")
+        raise HTTPException(status_code=403, detail="Not authorized to delete note")
     deleted_note = crud.delete_note(user.id, note_id, db)
     if deleted_note is None:
         raise HTTPException(status_code=400, detail="Note not deleted")
@@ -256,8 +256,8 @@ def create_tag(
 ):
     check_params = tag.dict()
     db_club = crud.read_club(user.id, check_params["club_id"], db)
-    if db_club is None:
-        raise HTTPException(status_code=400, detail="Club ID does not exist")
+    if not db_club:
+        raise HTTPException(status_code=400, detail="Club does not exist or not member")
     duplicate_tag = crud.read_duplicate_tag(
         check_params["club_id"], check_params["name"], db,
     )
@@ -266,16 +266,18 @@ def create_tag(
     return crud.create_tag(tag, db)
 
 
-@app.get("/tag/", response_model=schemas.Tags)
+@app.get("/tags/", response_model=schemas.Tags)
 def read_tags(
     club_id: int,
+    archived: bool = False,
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
+    """Read all tags for a club if user is in club (optional archived flag)"""
     db_club = crud.read_club(user.id, club_id, db)
     if not db_club:
-        raise HTTPException(status_code=400, detail="User not authorized to read tag")
-    return crud.read_tags(club_id, db)
+        raise HTTPException(status_code=403, detail="User not authorized to read tags")
+    return crud.read_tags(club_id, archived, db)
 
 
 @app.get("/tag/{tag_id}/", response_model=schemas.Tag)
@@ -284,8 +286,9 @@ def read_tag(
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    db_tag = crud.read_tag(tag_id, db)
-    if db_tag is None:
+    """Read tag by ID if user is corresponding club"""
+    db_tag = crud.read_tag(user.id, tag_id, db)
+    if not db_tag:
         raise HTTPException(status_code=400, detail="Tag not found")
     return db_tag
 
@@ -297,9 +300,14 @@ def update_tag(
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    db_tag = crud.read_tag(tag_id, db)
+    """Club admins can update Tag data"""
+    db_tag = crud.read_tag(user.id, tag_id, db)
     if db_tag is None:
         raise HTTPException(status_code=400, detail="Tag not found")
+    club_id = db_tag.club_id
+    db_club = crud.read_club(user.id, club_id, db)
+    if user.id != db_club.admin_user_id:
+        raise HTTPException(status_code=403, detail="User not authorized to update tag")
     return crud.update_tag(tag_id, tag, db)
 
 
@@ -309,7 +317,11 @@ def delete_tag(
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    tag_to_delete = crud.read_tag(tag_id, db)
+    tag_to_delete = crud.read_tag(user.id, tag_id, db)
     if tag_to_delete is None:
         raise HTTPException(status_code=400, detail="Tag not deleted, tag not found")
+    club_id = tag_to_delete.club_id
+    db_club = crud.read_club(user.id, club_id, db)
+    if user.id != db_club.admin_user_id:
+        raise HTTPException(status_code=403, detail="User not authorized to delete tag")
     return crud.delete_tag(tag_id, db)

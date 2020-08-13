@@ -225,8 +225,16 @@ def create_tag(tag: schemas.TagCreate, db: Session):
 
 
 # Tag READ
-def read_tag(tag_id: str, db: Session):
-    return db.query(models.Tag).filter(models.Tag.id == tag_id).first()
+def read_tag(user_id: int, tag_id: int, db: Session):
+    db_tag = (
+        db.query(models.Tag, models.User)
+        .filter(models.Tag.id == tag_id)
+        .filter(models.Club.users.any(models.User.id == user_id))
+        .first()
+    )
+    if not db_tag:
+        raise HTTPException(status_code=400, detail="Tag not found")
+    return db_tag.Tag
 
 
 # Tag READ
@@ -240,13 +248,15 @@ def read_duplicate_tag(club_id: int, name: str, db: Session):
 
 
 # Tag READ
-def read_tags(club_id: str, db: Session):
-    query_results = db.query(models.Tag).filter(models.Tag.club_id == club_id).all()
-    return {"tags": query_results}
+def read_tags(club_id: int, archived: bool, db: Session):
+    query_results = db.query(models.Tag).filter(models.Tag.club_id == club_id)
+    if not archived:
+        query_results = query_results.filter(models.Tag.archived == False)
+    return {"tags": query_results.all()}
 
 
 # Tag UPDATE
-def update_tag(tag_id: str, tag: schemas.TagUpdate, db: Session):
+def update_tag(tag_id: int, tag: schemas.TagUpdate, db: Session):
     db_tag = db.query(models.Tag).filter(models.Tag.id == tag_id).first()
     remove_nones = {k: v for k, v in tag.dict().items() if v is not None}
     db_tag.update(remove_nones)
@@ -256,7 +266,7 @@ def update_tag(tag_id: str, tag: schemas.TagUpdate, db: Session):
 
 
 # Tag DELETE
-def delete_tag(tag_id: str, db: Session):
+def delete_tag(tag_id: int, db: Session):
     db_tag = db.query(models.Tag).filter(models.Tag.id == tag_id).first()
     db.delete(db_tag)
     db.commit()

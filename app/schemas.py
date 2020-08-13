@@ -49,8 +49,8 @@ class TagBase(BaseModel):
     id: int
     name: str
     create_date: datetime
-    club_id: int
     archived: bool
+    club_id: int
 
     class Config:
         orm_mode = True
