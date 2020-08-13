@@ -1,12 +1,13 @@
 from app.integration_tests import utils
 
 
-def test_create_get_update_and_delete_club(client):
+def test_create_club(client):
     api_util = utils.MockApiRequests(client)
-    api_util.create_user_and_authenticate()  # creates a user and authenticates the client
+    api_util.create_user_and_authenticate()
 
     book_title = "a big old book"
-    response = api_util.create_club(book_title=book_title)
+    club_id = api_util.create_club(book_title=book_title).json()["id"]
+    response = client.get(f"/club/{club_id}/")
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["id"]
@@ -15,59 +16,83 @@ def test_create_get_update_and_delete_club(client):
     assert data["users"][0]["id"] == 1
     assert len(data["users"]) == 1
 
-    club_id = data["id"]
-    response = client.get(f"/club/{club_id}/")
-    assert response.status_code == 200, response.text
-    data = response.json()
 
-    response = client.get(f"/club/")
-    assert response.status_code == 200, response.text
-    data = response.json()
-    assert len(data["clubs"]) == 1
+def test_read_club(client):
+    api_util = utils.MockApiRequests(client)
+    api_util.create_user_and_authenticate()
+    api_util.create_club()
 
-    new_book_title = "Decolonizing Wealth"
-    response = client.put(
-        f"/club/{club_id}/", json={"book_title": new_book_title, "is_active": False}
-    )
-    assert response.status_code == 200, response.text
-    response = client.get(f"/club/{club_id}/")
-    assert response.status_code == 200, response.text
-    data = response.json()
-    assert data["book_title"] == new_book_title
-    assert data["is_active"] == False
-    client.put(f"/club/{club_id}/", json={"is_active": True})
+    assert client.get(f"/club/1/").json()["id"] == 1
+    assert client.get(f"/club/2/").json()["detail"] == "Club not found"
+
+
+def test_read_clubs(client):
+    api_util = utils.MockApiRequests(client)
+    api_util.create_user_and_authenticate()
+    api_util.create_club()
+
+    assert len(client.get(f"/clubs/").json()["clubs"]) == 1
 
     api_util.create_user2_and_authenticate()  # switch to user 2
 
-    response = client.put(f"/club/{club_id}/join/")
-    assert response.status_code == 200, response.text
-    data = response.json()
-    assert data["users"][1]["id"] == 2
-    assert len(data["users"]) == 2
+    assert not len(client.get(f"/clubs/").json()["clubs"])
 
-    response = client.get(f"/club/")
-    assert response.status_code == 200, response.text
-    data = response.json()
-    assert len(data["clubs"]) == 1
 
-    response = client.delete(f"/club/{club_id}/")
-    assert response.status_code == 400, response.text
-    data = response.json()
-    assert data["detail"] == "Club not deleted, user is not admin"
+def test_update_club_and_is_active_functionality(client):
+    api_util = utils.MockApiRequests(client)
+    api_util.create_user_and_authenticate()
+    api_util.create_club()
 
-    api_util.authenticate()  # switch back to user 1
-    response = client.delete(f"/club/{club_id}/")
-    assert response.status_code == 200, response.text
+    assert (
+        client.put(
+            "/club/2/", json={"is_active": False, "book_title": "Newish"}
+        ).json()["detail"]
+        == "Club not found"
+    )
 
-    response = client.get(f"/club/")
-    assert response.status_code == 200, response.text
-    data = response.json()
-    assert len(data["clubs"]) == 0
+    client.put("/club/1/", json={"is_active": False, "book_title": "Newish"}).json()
+    assert client.get("/club/1/").json()["is_active"] == False
+    assert client.get("/club/1/").json()["book_title"] == "Newish"
 
-    api_util.authenticate(
-        email="anotheruser@gmail.com", password="password2"
-    )  # switch back to user 1
-    response = client.get(f"/club/")
-    assert response.status_code == 200, response.text
-    data = response.json()
-    assert len(data["clubs"]) == 0
+    api_util.create_user2_and_authenticate()  # switch to user 2
+    client.put(f"/club/1/join/")  # join the club
+    assert (
+        client.put(
+            "/club/1/", json={"is_active": False, "book_title": "Newish"}
+        ).json()["detail"]
+        == "Club not updated, user is not admin"
+    )
+
+    api_util.authenticate()
+    client.put("/club/1/", json={"is_active": False, "book_title": "Newish"})
+    assert not len(client.get("/clubs/").json()["clubs"])
+
+
+def test_join_club(client):
+    api_util = utils.MockApiRequests(client)
+    api_util.create_user_and_authenticate()
+    api_util.create_club()
+
+    api_util.create_user2_and_authenticate()  # switch to user 2
+    client.put(f"/club/1/join/")  # join the club
+
+    assert len(client.get("/club/1/").json()["users"]) == 2
+
+
+def test_delete_club(client):
+    api_util = utils.MockApiRequests(client)
+    api_util.create_user_and_authenticate()
+    api_util.create_club()
+
+    client.delete("/club/1/")
+    assert client.get("/club/1/").json()["detail"] == "Club not found"
+    assert not len(client.get("/clubs/").json()["clubs"])
+
+    api_util.create_club()
+    api_util.create_user2_and_authenticate()  # switch to user 2
+    client.put(f"/club/1/join/")  # join the club
+
+    assert (
+        client.delete("/club/1/").json()["detail"]
+        == "Club not deleted, user is not admin"
+    )

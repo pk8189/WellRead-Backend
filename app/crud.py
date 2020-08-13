@@ -67,14 +67,14 @@ def read_club(user_id: int, club_id: int, db: Session):
 
 # Club READ
 def read_clubs(
-    user_id: int, db: Session,
+    user_id: int, is_active: bool, db: Session,
 ):
-    query_results = (
-        db.query(models.Club)
-        .filter(models.Club.users.any(models.User.id == user_id))
-        .all()
+    query_results = db.query(models.Club).filter(
+        models.Club.users.any(models.User.id == user_id)
     )
-    return {"clubs": query_results}
+    if is_active:
+        query_results = query_results.filter(models.Club.is_active == True)
+    return {"clubs": query_results.all()}
 
 
 # Club READ

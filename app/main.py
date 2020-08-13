@@ -100,11 +100,13 @@ def read_club(
     return db_club
 
 
-@app.get("/club/", response_model=schemas.Clubs)
+@app.get("/clubs/", response_model=schemas.Clubs)
 def read_clubs(
-    db: Session = Depends(get_db), user: schemas.User = Depends(get_current_user),
+    is_active: bool = True,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
 ):
-    return crud.read_clubs(user.id, db)
+    return crud.read_clubs(user.id, is_active, db)
 
 
 @app.put("/club/{club_id}/", response_model=schemas.Club)
@@ -114,6 +116,13 @@ def update_club(
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
+    db_club = crud.read_club(user.id, club_id, db)
+    if db_club is None:
+        raise HTTPException(status_code=400, detail="Club not found")
+    if db_club.admin_user_id != user.id:
+        raise HTTPException(
+            status_code=400, detail="Club not updated, user is not admin",
+        )
     return crud.update_club(club_id, club, db)
 
 
