@@ -23,23 +23,13 @@ def create_user(user: schemas.UserCreate, db: Session):
 
 
 # User READ
-def read_user(id: str, db: Session):
+def read_user(id: int, db: Session):
     return db.query(models.User).filter(models.User.id == id).first()
 
 
 # User READ
 def get_user_by_email(email: str, db: Session):
     return db.query(models.User).filter(models.User.email == email).first()
-
-
-# User UPDATE
-def update_user(id: str, user: schemas.UserUpdate, db: Session):
-    db_user = db.query(models.User).filter(models.User.id == id).first()
-    remove_nones = {k: v for k, v in user.dict().items() if v is not None}
-    db_user.update(remove_nones)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
 
 
 # Club CREATE

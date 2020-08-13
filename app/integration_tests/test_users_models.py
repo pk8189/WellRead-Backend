@@ -24,17 +24,3 @@ def test_get_user(client):
     assert not data.get("password") and not data.get(
         "hashed_password"
     )  # make sure password is never sent
-
-
-def test_update_user(client):
-    api_util = utils.MockApiRequests(client)
-    api_util.create_user_and_authenticate()
-
-    my_new_name = "Not Patrick Anymore!"
-    new_email = "newemail@gmail.com"
-    api_util.update_user(full_name=my_new_name, email=new_email)
-    api_util.authenticate(email=new_email)
-
-    data = client.get("/user/").json()
-    assert data["full_name"] == my_new_name
-    assert data["email"] == new_email

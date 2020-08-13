@@ -112,11 +112,6 @@ class UserCreate(BaseModel):
     password: str
 
 
-class UserUpdate(BaseModel):
-    full_name: Optional[str] = None
-    email: Optional[str] = None
-
-
 class User(UserBase):
     clubs: List[ClubBase]
     notes: List[NoteBase]

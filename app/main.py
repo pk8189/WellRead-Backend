@@ -52,6 +52,10 @@ async def login_for_access_token(
 def create_user(
     user: schemas.UserCreate, db: Session = Depends(get_db),
 ):
+    """
+    Unauthenticated endpoint to create users.
+    Block the user if the email already exists
+    """
     db_user = crud.get_user_by_email(user.email, db)
     if db_user is not None:
         raise HTTPException(
@@ -64,19 +68,11 @@ def create_user(
 def read_user(
     user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db),
 ):
+    """Get the current users data"""
     db_user = crud.read_user(user.id, db)
     if db_user is None:
         raise HTTPException(status_code=400, detail="User not found")
     return db_user
-
-
-@app.put("/user/", response_model=schemas.User)
-def update_user(
-    updated_user: schemas.UserUpdate,
-    user: schemas.User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    return crud.update_user(user.id, updated_user, db)
 
 
 @app.post("/club/", response_model=schemas.Club)
