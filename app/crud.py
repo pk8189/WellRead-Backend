@@ -142,19 +142,32 @@ def read_note(user_id: int, note_id: int, db: Session):
     return db_note.Note
 
 
-# TODO: make the below read_team_notes(club_id, db)
-# TODO: make another for read_personal_notes(user_id, club_id, db)
-
 # Note READ
-def read_notes(club_id: int, db: Session):
+def read_team_notes(club_id: int, archived: bool, db: Session):
     query_results = (
         db.query(models.Note)
         .filter(models.Note.club_id == club_id)
-        .filter(models.Note.archived == False)
-        .filter(models.Note.private == False)
-        .all()
+        .filter(models.Note.private == False)  # only return public notes
     )
-    return {"notes": query_results}
+    if not archived:
+        query_results = query_results.filter(models.Note.archived == False)
+    return {"notes": query_results.all()}
+
+
+# Note READ
+def read_personal_notes(
+    user_id: int, club_id: int, private: bool, archived: bool, db: Session,
+):
+    query_results = (
+        db.query(models.Note)
+        .filter(models.Note.user_id == user_id)
+        .filter(models.Note.club_id == club_id)
+    )
+    if not private:
+        query_results = query_results.filter(models.Note.private == False)
+    if not archived:
+        query_results = query_results.filter(models.Note.archived == False)
+    return {"notes": query_results.all()}
 
 
 # Note UPDATE

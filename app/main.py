@@ -178,16 +178,25 @@ def read_note(
     return db_note
 
 
-@app.get("/note/", response_model=schemas.Notes)
-def read_notes(
+@app.get("/notes/me/", response_model=schemas.Notes)
+def read_my_notes(
     club_id: int,
+    private: bool = False,
+    archived: bool = False,
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    """
-    Return all notes for a club which are neither private nor archived
-    """
-    return crud.read_notes(club_id, db)
+    return crud.read_personal_notes(user.id, club_id, private, archived, db)
+
+
+@app.get("/notes/club/", response_model=schemas.Notes)
+def read_team_notes(
+    club_id: int,
+    archived: bool = False,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+):
+    return crud.read_team_notes(club_id, archived, db)
 
 
 @app.put("/note/{note_id}/", response_model=schemas.Note)
@@ -217,6 +226,8 @@ def add_tags_to_notes(
             raise HTTPException(status_code=400, detail="Tag not found")
     if db_note is None:
         raise HTTPException(status_code=400, detail="Note not found")
+    if db_note.user_id != user.id:
+        raise HTTPException(status_code=400, detail="Not authorized to tag note")
     return crud.add_tags_to_note(user.id, note_id, tags.tags, db)
 
 
@@ -226,6 +237,11 @@ def delete_note(
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
+    db_note = crud.read_note(user.id, note_id, db)
+    if db_note is None:
+        raise HTTPException(status_code=400, detail="Note not found")
+    if db_note.user_id != user.id:
+        raise HTTPException(status_code=400, detail="Not authorized to delete note")
     deleted_note = crud.delete_note(user.id, note_id, db)
     if deleted_note is None:
         raise HTTPException(status_code=400, detail="Note not deleted")
