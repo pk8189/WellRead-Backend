@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app import auth_utils, models, schemas
@@ -122,13 +123,37 @@ def create_note(user_id: int, note: schemas.NoteCreate, db: Session):
 
 
 # Note READ
-def read_note(note_id: int, db: Session):
-    return db.query(models.Note).filter(models.Note.id == note_id).first()
+def read_note(user_id: int, note_id: int, db: Session):
+    """
+    Get a note by ID if the user is in the club the note was written in
+    and if the note is private, ensure that the user requesting the note
+    wrote the note.
+    """
+    db_note = (
+        db.query(models.Note, models.Club)
+        .filter(models.Note.id == note_id)
+        .filter(models.Club.users.any(models.User.id == user_id))
+        .first()
+    )
+    if not db_note:
+        raise HTTPException(status_code=400, detail="Note not found")
+    if db_note.Note.private == True and db_note.Note.user_id != user_id:
+        raise HTTPException(status_code=401, detail="Not authorized")
+    return db_note.Note
 
+
+# TODO: make the below read_team_notes(club_id, db)
+# TODO: make another for read_personal_notes(user_id, club_id, db)
 
 # Note READ
 def read_notes(club_id: int, db: Session):
-    query_results = db.query(models.Note).filter(models.Note.club_id == club_id).all()
+    query_results = (
+        db.query(models.Note)
+        .filter(models.Note.club_id == club_id)
+        .filter(models.Note.archived == False)
+        .filter(models.Note.private == False)
+        .all()
+    )
     return {"notes": query_results}
 
 

@@ -22,14 +22,24 @@ def test_create_read_update_delete_notes(client):
     assert data["content"] == "Oh my, such a lovely note!"
 
     updated_res = api_util.update_note(
-        note_id=note_id, content="new content", private=True, archived=True
+        note_id=note_id, content="new content", private=True
     )
     assert updated_res.status_code == 200, updated_res.text
     data = updated_res.json()
     assert data["content"] == "new content"
     assert data["private"] == True
-    assert data["archived"] == True
 
+    no_notes_because_private = client.get("/note/?club_id=1").json()
+    assert not len(no_notes_because_private["notes"])
+    api_util.update_note(
+        note_id=note_id, content="new content", private=False, archived=True
+    )
+    no_notes_because_archived = client.get("/note/?club_id=1").json()
+    assert not len(no_notes_because_archived["notes"])
+
+    api_util.update_note(
+        note_id=note_id, content="new content", private=False, archived=False
+    )
     response = client.get("/note/?club_id=1")
     assert response.status_code == 200, response.text
     data = response.json()
@@ -42,8 +52,18 @@ def test_create_read_update_delete_notes(client):
     data = get_response.json()
     assert data["detail"] == "Note not found"
 
+    data = api_util.create_note(private=True).json()  # create note as user 1
+    user1s_note = data["id"]
+
     api_util.create_user2_and_authenticate()  # create and login as user 2
+    data = client.get(f"/note/{note_id}/").json()
+    assert data["detail"] == "Note not found"
+
     client.put(f"/club/1/join/")  # user 2 joins the club
+    data = client.get(
+        f"/note/{user1s_note}/"
+    ).json()  # user 2 tries to get user 1s private note
+    assert data["detail"] == "Not authorized"
 
     response = api_util.create_note()
     data = response.json()
@@ -66,5 +86,9 @@ def test_create_read_update_delete_notes(client):
 
     api_util.authenticate()  # log back in as user 1
     client.delete(f"/club/1/")
-    get_response = client.get(f"/note/{note_id}/")
+    get_response = client.get(
+        f"/note/{note_id}/"
+    )  # note should not exist if club is deleted
     assert get_response.status_code == 400, get_response.text
+    data = get_response.json()
+    assert data["detail"] == "Note not found"

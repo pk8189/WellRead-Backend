@@ -56,7 +56,7 @@ class MockApiRequests:
         return self.client.post("/club/", json=body,)
 
     def create_note(
-        self, content="Oh my, such a lovely note!", club_id=1,
+        self, content="Oh my, such a lovely note!", club_id=1, private=False
     ):
         body = self.prep_kwargs(locals())
         return self.client.post("/note/", json=body,)

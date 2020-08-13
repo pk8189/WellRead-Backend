@@ -162,7 +162,6 @@ def create_note(
     db_club = crud.read_club(user.id, check_params["club_id"], db)
     if db_club is None:
         raise HTTPException(status_code=400, detail="Club ID does not exist")
-
     return crud.create_note(user.id, note, db)
 
 
@@ -172,18 +171,22 @@ def read_note(
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    db_note = crud.read_note(note_id, db)
-    if db_note is None:
-        raise HTTPException(status_code=400, detail="Note not found")
+    """
+    Get note data (if note is private, you must be the note owner)
+    """
+    db_note = crud.read_note(user.id, note_id, db)
     return db_note
 
 
-@app.get("/note/", response_model=schemas.Notes)  # TODO: permissions
+@app.get("/note/", response_model=schemas.Notes)
 def read_notes(
     club_id: int,
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
+    """
+    Return all notes for a club which are neither private nor archived
+    """
     return crud.read_notes(club_id, db)
 
 
@@ -207,7 +210,7 @@ def add_tags_to_notes(
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    db_note = crud.read_note(note_id, db)
+    db_note = crud.read_note(user.id, note_id, db)
     for tag in tags.tags:
         db_tag = crud.read_tag(tag, db)
         if db_tag is None:
