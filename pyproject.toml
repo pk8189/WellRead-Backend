@@ -27,6 +27,7 @@ autoflake = "^1.3.1"
 isort = "^4.3.21"
 pytest-mypy = "^0.6.2"
 mypy = "^0.782"
+pytest-cov = "^2.10.0"
 
 [build-system]
 requires = ["poetry>=0.12"]

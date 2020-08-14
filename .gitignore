@@ -1,4 +1,7 @@
 wellread.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
 
 # non production database
 sql_app.db

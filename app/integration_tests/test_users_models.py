@@ -12,6 +12,20 @@ def test_create_user(client):
     response = client.get("/user/")
     assert response.status_code == 200, response.text
 
+    assert (
+        client.post(
+            "/token", data={"username": "pmkelly4444@gmail.com", "password": "1"}
+        ).json()["detail"]
+        == "Incorrect username or password"
+    )
+
+    assert (
+        client.post(
+            "/token", data={"username": "invalid", "password": "string"}
+        ).json()["detail"]
+        == "Incorrect username or password"
+    )
+
 
 def test_get_user(client):
     api_util = utils.MockApiRequests(client)

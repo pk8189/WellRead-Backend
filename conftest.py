@@ -74,6 +74,8 @@ def client(_app: FastAPI, db_session: Session) -> Generator[TestClient, Any, Non
 
 
 def pytest_configure(config) -> None:
-    plugin = config.pluginmanager.getplugin("mypy")
-    plugin.mypy_argv.append("--check-untyped-defs")
-    plugin.mypy_argv.append("--ignore-missing-imports")
+    mypy = config.pluginmanager.getplugin("mypy")
+    mypy.mypy_argv.append("--check-untyped-defs")
+    mypy.mypy_argv.append("--ignore-missing-imports")
+
+    config.pluginmanager.getplugin("cov")
