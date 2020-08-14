@@ -60,7 +60,7 @@ def test_update_tag_and_archived_functionality(client):
     client.put(f"/club/{club_id}/join/")  # join the club as non admin member
     assert (
         api_util.update_tag(tag_id=1, name="invalid").json()["detail"]
-        == "User not authorized to update tag"
+        == "Unauthorized, user is not club admin"
     )
 
     assert not len(client.get(f"/tags/?club_id=1").json()["tags"])
@@ -81,5 +81,6 @@ def test_delete_tag(client):
     client.put(f"/club/{club_id}/join/")  # join the club as non admin member
 
     assert (
-        client.delete("/tag/1/").json()["detail"] == "User not authorized to delete tag"
+        client.delete("/tag/1/").json()["detail"]
+        == "Unauthorized, user is not club admin"
     )

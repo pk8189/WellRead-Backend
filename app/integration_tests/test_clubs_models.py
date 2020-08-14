@@ -60,7 +60,7 @@ def test_update_club_and_is_active_functionality(client):
         client.put(
             "/club/1/", json={"is_active": False, "book_title": "Newish"}
         ).json()["detail"]
-        == "Club not updated, user is not admin"
+        == "Unauthorized, user is not club admin"
     )
 
     api_util.authenticate()
@@ -94,5 +94,5 @@ def test_delete_club(client):
 
     assert (
         client.delete("/club/1/").json()["detail"]
-        == "Club not deleted, user is not admin"
+        == "Unauthorized, user is not club admin"
     )

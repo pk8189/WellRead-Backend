@@ -4,7 +4,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from app import auth_utils, crud, models, schemas
+from app import auth_utils, crud, models, roles, schemas
 from app.database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
@@ -106,13 +106,7 @@ def update_club(
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    db_club = crud.read_club(user.id, club_id, db)
-    if db_club is None:
-        raise HTTPException(status_code=400, detail="Club not found")
-    if db_club.admin_user_id != user.id:
-        raise HTTPException(
-            status_code=400, detail="Club not updated, user is not admin",
-        )
+    roles.club_exists_and_is_admin(user.id, club_id, db)
     return crud.update_club(club_id, club, db)
 
 
@@ -138,11 +132,7 @@ def delete_club(
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    db_club = crud.read_club(user.id, club_id, db)
-    if db_club.admin_user_id != user.id:
-        raise HTTPException(
-            status_code=400, detail="Club not deleted, user is not admin",
-        )
+    roles.club_exists_and_is_admin(user.id, club_id, db)
     deleted_club = crud.delete_club(club_id, db)
     if delete_club is None:
         raise HTTPException(
@@ -303,10 +293,7 @@ def update_tag(
     db_tag = crud.read_tag(user.id, tag_id, db)
     if db_tag is None:
         raise HTTPException(status_code=400, detail="Tag not found")
-    club_id = db_tag.club_id
-    db_club = crud.read_club(user.id, club_id, db)
-    if user.id != db_club.admin_user_id:
-        raise HTTPException(status_code=403, detail="User not authorized to update tag")
+    roles.club_exists_and_is_admin(user.id, db_tag.club_id, db)
     return crud.update_tag(tag_id, tag, db)
 
 
@@ -319,8 +306,5 @@ def delete_tag(
     tag_to_delete = crud.read_tag(user.id, tag_id, db)
     if tag_to_delete is None:
         raise HTTPException(status_code=400, detail="Tag not deleted, tag not found")
-    club_id = tag_to_delete.club_id
-    db_club = crud.read_club(user.id, club_id, db)
-    if user.id != db_club.admin_user_id:
-        raise HTTPException(status_code=403, detail="User not authorized to delete tag")
+    roles.club_exists_and_is_admin(user.id, tag_to_delete.club_id, db)
     return crud.delete_tag(tag_id, db)
