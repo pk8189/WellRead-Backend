@@ -130,15 +130,19 @@ def read_note(user_id: int, note_id: int, db: Session) -> schemas.Note:
 
 
 # Note READ
-def read_team_notes(club_id: int, archived: bool, db: Session) -> schemas.Notes:
+def read_team_notes(
+    user_id: int, club_id: int, archived: bool, db: Session
+) -> schemas.Notes:
     query_results = (
-        db.query(models.Note)
+        db.query(models.Note, models.Club)
         .filter(models.Note.club_id == club_id)
+        .filter(models.Club.users.any(models.User.id == user_id))
         .filter(models.Note.private == False)  # only return public notes
     )
     if not archived:
         query_results = query_results.filter(models.Note.archived == False)
-    return schemas.Notes(notes=query_results.all())
+    results = [qr.Note for qr in query_results.all()]
+    return schemas.Notes(notes=results)
 
 
 # Note READ

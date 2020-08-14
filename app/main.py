@@ -185,7 +185,7 @@ def read_team_notes(
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    return crud.read_team_notes(club_id, archived, db)
+    return crud.read_team_notes(user.id, club_id, archived, db)
 
 
 @app.put("/note/{note_id}/", response_model=schemas.Note)
