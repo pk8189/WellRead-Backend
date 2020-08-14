@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Literal, Optional, Union
 
 from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -23,15 +23,17 @@ credentials_exception = HTTPException(
 )
 
 
-def verify_password(plain_password, hashed_password):
+def verify_password(
+    plain_password: str, hashed_password: str
+) -> Union[Any, Literal[False]]:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def get_password_hash(password: str):
+def get_password_hash(password: str) -> Any:
     return pwd_context.hash(password)
 
 
-def decode_jwt(token):
+def decode_jwt(token) -> str:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
@@ -42,7 +44,7 @@ def decode_jwt(token):
         raise credentials_exception
 
 
-def authenticate_user(db, email: str, password: str):
+def authenticate_user(db, email: str, password: str) -> bool:
     user = crud.get_user_auth(email, db)
     if not user:
         return False
@@ -51,7 +53,7 @@ def authenticate_user(db, email: str, password: str):
     return user
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta

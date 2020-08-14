@@ -4,25 +4,25 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from app import auth_utils, crud, models, schemas  # pylint: disable=no-name-in-module
+from app import auth_utils, crud, models, schemas
 from app.database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(debug=True)
 
-# load the database on startup
-def get_db():
+
+def get_db() -> SessionLocal:
     db = SessionLocal()
     try:
         yield db
     finally:
-        db.close()  # pylint: disable=no-member
+        db.close()
 
 
 async def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(auth_utils.oauth2_scheme),
-):
+) -> schemas.User:
     email = auth_utils.decode_jwt(token)
     user = crud.get_user_auth(email, db)
     if user is None:

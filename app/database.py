@@ -29,7 +29,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 class WellReadBase(object):
-    def update(self, non_null_updates: dict):
+    def update(self, non_null_updates: dict) -> None:
         """
         Custom DICT -> SQL update method
         Only safe for non-null setting. 
