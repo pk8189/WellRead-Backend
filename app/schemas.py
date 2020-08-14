@@ -112,6 +112,10 @@ class UserCreate(BaseModel):
     password: str
 
 
+class DBUser(UserBase):
+    hashed_password: str
+
+
 class User(UserBase):
     clubs: List[ClubBase]
     notes: List[NoteBase]

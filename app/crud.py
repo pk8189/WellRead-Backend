@@ -5,7 +5,7 @@ from app import auth_utils, models, schemas
 
 
 # User AUTH
-def get_user_auth(email: str, db: Session) -> schemas.User:
+def get_user_auth(email: str, db: Session) -> schemas.DBUser:
     return db.query(models.User).filter(models.User.email == email).first()
 
 
@@ -67,11 +67,11 @@ def read_clubs(user_id: int, is_active: bool, db: Session,) -> schemas.Clubs:
     )
     if is_active:
         query_results = query_results.filter(models.Club.is_active == True)
-    return {"clubs": query_results.all()}
+    return schemas.Clubs(clubs=query_results.all())
 
 
 # Club UPDATE
-def update_club(club_id: str, club: schemas.ClubUpdate, db: Session) -> schemas.Club:
+def update_club(club_id: int, club: schemas.ClubUpdate, db: Session) -> schemas.Club:
     db_club = db.query(models.Club).filter(models.Club.id == club_id).first()
     remove_nones = {k: v for k, v in club.dict().items() if v is not None}
     db_club.update(remove_nones)
@@ -81,9 +81,9 @@ def update_club(club_id: str, club: schemas.ClubUpdate, db: Session) -> schemas.
 
 
 # Club UPDATE
-def add_user_to_club(club_id: str, id: str, db: Session) -> schemas.Club:
+def add_user_to_club(club_id: int, user_id: int, db: Session) -> schemas.Club:
     db_club = db.query(models.Club).filter(models.Club.id == club_id).first()
-    db_user = db.query(models.User).filter(models.User.id == id).first()
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
     db_club.users.append(db_user)
     db.commit()
     db.refresh(db_club)
@@ -91,7 +91,7 @@ def add_user_to_club(club_id: str, id: str, db: Session) -> schemas.Club:
 
 
 # Club DELETE
-def delete_club(club_id: str, db: Session) -> schemas.Club:
+def delete_club(club_id: int, db: Session) -> schemas.Club:
     db_club = db.query(models.Club).filter(models.Club.id == club_id).first()
     db.delete(db_club)
     db.commit()
@@ -138,7 +138,7 @@ def read_team_notes(club_id: int, archived: bool, db: Session) -> schemas.Notes:
     )
     if not archived:
         query_results = query_results.filter(models.Note.archived == False)
-    return {"notes": query_results.all()}
+    return schemas.Notes(notes=query_results.all())
 
 
 # Note READ
@@ -154,7 +154,7 @@ def read_personal_notes(
         query_results = query_results.filter(models.Note.private == False)
     if not archived:
         query_results = query_results.filter(models.Note.archived == False)
-    return {"notes": query_results.all()}
+    return schemas.Notes(notes=query_results.all())
 
 
 # Note UPDATE
@@ -243,7 +243,7 @@ def read_tags(club_id: int, archived: bool, db: Session) -> schemas.Tags:
     query_results = db.query(models.Tag).filter(models.Tag.club_id == club_id)
     if not archived:
         query_results = query_results.filter(models.Tag.archived == False)
-    return {"tags": query_results.all()}
+    return schemas.Tags(tags=query_results.all())
 
 
 # Tag UPDATE

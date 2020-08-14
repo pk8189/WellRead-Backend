@@ -1,4 +1,5 @@
-import os
+# type: ignore
+from os import getenv
 from typing import Any, Generator
 
 import pytest
@@ -10,10 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app.database import Base
 from app.main import app, get_db
 
-# Default to using sqlite in memory for fast tests.
-# Can be overridden by environment variable for testing in CI against other
-# database engines
-SQLALCHEMY_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite:///./test.db")
+SQLALCHEMY_DATABASE_URL = getenv("TEST_DATABASE_URL", "sqlite:///./test.db")
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
@@ -73,3 +71,9 @@ def client(_app: FastAPI, db_session: Session) -> Generator[TestClient, Any, Non
     _app.dependency_overrides[get_db] = _get_test_db
     with TestClient(_app) as client:
         yield client
+
+
+def pytest_configure(config) -> None:
+    plugin = config.pluginmanager.getplugin("mypy")
+    plugin.mypy_argv.append("--check-untyped-defs")
+    plugin.mypy_argv.append("--ignore-missing-imports")
