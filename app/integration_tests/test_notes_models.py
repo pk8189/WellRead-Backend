@@ -136,7 +136,10 @@ def test_add_tags_to_note(client):
     another_user_tagging_notes = client.put(
         f"/note/{note_id}/tag/", json={"tags": [tag_id]}
     ).json()
-    assert another_user_tagging_notes["detail"] == "Not authorized to tag note"
+    assert (
+        another_user_tagging_notes["detail"]
+        == "Unauthorized, user is not owner of note"
+    )
 
     note_id = api_util.create_note(content="test2").json()["id"]
     client.put(f"/note/{note_id}/tag/", json={"tags": [tag_id]}).json()
@@ -165,5 +168,5 @@ def test_delete_notes(client):
 
     assert (
         client.delete(f"/note/{user_1_note_id}/").json()["detail"]
-        == "Not authorized to delete note"
+        == "Unauthorized, user is not owner of note"
     )

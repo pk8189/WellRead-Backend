@@ -1,11 +1,12 @@
 from datetime import timedelta
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from app import auth_utils, crud, models, roles, schemas
+from app import auth_utils, crud, models, schemas
 from app.database import SessionLocal, engine
+from app.permissions import Club, Note, Tag, User
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -20,6 +21,13 @@ def get_db() -> SessionLocal:
         db.close()
 
 
+async def user_can_create(
+    user: schemas.UserCreate, db: Session = Depends(get_db),
+) -> schemas.UserCreate:
+    User(db).email_not_in_use(user.email)
+    return user
+
+
 async def get_current_user(
     db: Session = Depends(get_db), token: str = Depends(auth_utils.oauth2_scheme),
 ) -> schemas.DBUser:
@@ -28,6 +36,114 @@ async def get_current_user(
     if user is None:
         raise auth_utils.credentials_exception
     return user
+
+
+async def tag_is_admin(
+    tag_id: int,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+) -> int:
+    Tag(db, user, tag_id).is_admin()
+    return tag_id
+
+
+async def club_is_admin(
+    club_id: int,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+) -> int:
+    Club(db, user, club_id).is_admin()
+    return club_id
+
+
+async def club_is_member(
+    club_id: int,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+) -> int:
+    Club(db, user, club_id).read()
+    return club_id
+
+
+async def club_is_invited(
+    club_id: int,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+) -> int:
+    Club(db, user, club_id).is_invited()
+    return club_id
+
+
+async def note_is_valid(
+    note: schemas.NoteCreate,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+) -> schemas.NoteCreate:
+    Club(db, user, note.club_id).exists()
+    return note
+
+
+async def note_can_read(
+    note_id: int,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+) -> int:
+    Note(db, user, note_id).can_read()
+    return note_id
+
+
+async def note_can_update(
+    note_id: int,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+) -> int:
+    Note(db, user, note_id).can_update()
+    return note_id
+
+
+async def tags_read(
+    tags: schemas.NoteAddTags,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+) -> schemas.NoteAddTags:
+    [Tag(db, user, tag_id).read() for tag_id in tags.tags]
+    return tags
+
+
+async def note_can_delete(
+    note_id: int,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+) -> int:
+    Note(db, user, note_id).can_delete()
+    return note_id
+
+
+async def tag_can_create(
+    tag: schemas.TagCreate,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+) -> schemas.TagCreate:
+    Club(db, user, tag.club_id).duplicate_tag(tag.name)
+    return tag
+
+
+async def tag_can_read(
+    tag_id: int,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+) -> int:
+    Tag(db, user, tag_id).can_read()
+    return tag_id
+
+
+async def tag_is_admin(
+    tag_id: int,
+    db: Session = Depends(get_db),
+    user: schemas.User = Depends(get_current_user),
+) -> int:
+    Tag(db, user, tag_id).is_admin()
+    return tag_id
 
 
 @app.post("/token", response_model=schemas.Token)
@@ -46,15 +162,6 @@ async def login_for_access_token(
 def create_user(
     user: schemas.UserCreate, db: Session = Depends(get_db),
 ):
-    """
-    Unauthenticated endpoint to create users.
-    Block the user if the email already exists
-    """
-    db_user = crud.get_user_by_email(user.email, db)
-    if db_user is not None:
-        raise HTTPException(
-            status_code=400, detail="User with this email already exists"
-        )
     return crud.create_user(user, db)
 
 
@@ -62,11 +169,7 @@ def create_user(
 def read_user(
     user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db),
 ):
-    """Get the current users data"""
-    db_user = crud.read_user(user.id, db)
-    if db_user is None:
-        raise HTTPException(status_code=400, detail="User not found")
-    return db_user
+    return user
 
 
 @app.post("/club/", response_model=schemas.Club)
@@ -80,14 +183,11 @@ def create_club(
 
 @app.get("/club/{club_id}/", response_model=schemas.Club)
 def read_club(
-    club_id: int,
+    club_id: int = Depends(club_is_member),
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    db_club = crud.read_club(user.id, club_id, db)
-    if db_club is None:
-        raise HTTPException(status_code=400, detail="Club not found")
-    return db_club
+    return crud.read_club(user.id, club_id, db)
 
 
 @app.get("/clubs/", response_model=schemas.Clubs)
@@ -101,70 +201,45 @@ def read_clubs(
 
 @app.put("/club/{club_id}/", response_model=schemas.Club)
 def update_club(
-    club_id: int,
     club: schemas.ClubUpdate,
+    club_id: int = Depends(club_is_admin),
     db: Session = Depends(get_db),
-    user: schemas.User = Depends(get_current_user),
 ):
-    roles.club_exists_and_is_admin(user.id, club_id, db)
     return crud.update_club(club_id, club, db)
 
 
 @app.put("/club/{club_id}/join/", response_model=schemas.Club)
 def user_join(
-    club_id: int,
+    club_id: int = Depends(club_is_invited),
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    db_user = crud.read_user(user.id, db)
-    if db_user is None:
-        raise HTTPException(status_code=400, detail="User not found")
-    db_club = crud.read_clubs_for_joining(club_id, db)
-    if db_club is None:
-        raise HTTPException(status_code=400, detail="Club not found")
-    new_db_club = crud.add_user_to_club(club_id, user.id, db)
-    return new_db_club
+    return crud.add_user_to_club(club_id, user.id, db)
 
 
 @app.delete("/club/{club_id}/", response_model=schemas.ClubDelete)
 def delete_club(
-    club_id: int,
-    db: Session = Depends(get_db),
-    user: schemas.User = Depends(get_current_user),
+    club_id: int = Depends(club_is_admin), db: Session = Depends(get_db),
 ):
-    roles.club_exists_and_is_admin(user.id, club_id, db)
-    deleted_club = crud.delete_club(club_id, db)
-    if delete_club is None:
-        raise HTTPException(
-            status_code=400, detail="Club not deleted, club not found",
-        )
-    return deleted_club
+    return crud.delete_club(club_id, db)
 
 
 @app.post("/note/", response_model=schemas.Note)
 def create_note(
-    note: schemas.NoteCreate,
+    note: schemas.NoteCreate = Depends(note_is_valid),
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    check_params = note.dict()
-    db_club = crud.read_club(user.id, check_params["club_id"], db)
-    if db_club is None:
-        raise HTTPException(status_code=400, detail="Club ID does not exist")
     return crud.create_note(user.id, note, db)
 
 
 @app.get("/note/{note_id}/", response_model=schemas.Note)
 def read_note(
-    note_id: int,
+    note_id: int = Depends(note_can_read),
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    """
-    Get note data (if note is private, you must be the note owner)
-    """
-    db_note = crud.read_note(user.id, note_id, db)
-    return db_note
+    return crud.read_note(user.id, note_id, db)
 
 
 @app.get("/notes/me/", response_model=schemas.Notes)
@@ -190,121 +265,69 @@ def read_team_notes(
 
 @app.put("/note/{note_id}/", response_model=schemas.Note)
 def update_note(
-    note_id: int,
     note: schemas.NoteUpdate,
+    note_id: int = Depends(note_can_update),
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    db_note = crud.update_note(user.id, note_id, note, db)
-    if not db_note:
-        raise HTTPException(status_code=400, detail="Note not found")
-    return db_note
+    return crud.update_note(user.id, note_id, note, db)
 
 
 @app.put("/note/{note_id}/tag/", response_model=schemas.Note)
 def add_tags_to_notes(
-    note_id: int,
-    tags: schemas.NoteAddTags,
+    tags: schemas.NoteAddTags = Depends(tags_read),
+    note_id: int = Depends(note_can_update),
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    db_note = crud.read_note(user.id, note_id, db)
-    for tag in tags.tags:
-        db_tag = crud.read_tag(user.id, tag, db)
-        if db_tag is None:
-            raise HTTPException(status_code=400, detail="Tag not found")
-    if db_note is None:
-        raise HTTPException(status_code=400, detail="Note not found")
-    if db_note.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to tag note")
     return crud.add_tags_to_note(user.id, note_id, tags.tags, db)
 
 
 @app.delete("/note/{note_id}/", response_model=schemas.NoteDelete)
 def delete_note(
-    note_id: int,
+    note_id: int = Depends(note_can_delete),
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    db_note = crud.read_note(user.id, note_id, db)
-    if db_note is None:
-        raise HTTPException(status_code=400, detail="Note not found")
-    if db_note.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete note")
-    deleted_note = crud.delete_note(user.id, note_id, db)
-    if deleted_note is None:
-        raise HTTPException(status_code=400, detail="Note not deleted")
-    return deleted_note
+    return crud.delete_note(user.id, note_id, db)
 
 
 @app.post("/tag/", response_model=schemas.Tag)
 def create_tag(
-    tag: schemas.TagCreate,
-    db: Session = Depends(get_db),
-    user: schemas.User = Depends(get_current_user),
+    tag: schemas.TagCreate = Depends(tag_can_create), db: Session = Depends(get_db),
 ):
-    check_params = tag.dict()
-    db_club = crud.read_club(user.id, check_params["club_id"], db)
-    if not db_club:
-        raise HTTPException(status_code=400, detail="Club does not exist or not member")
-    duplicate_tag = crud.read_duplicate_tag(
-        check_params["club_id"], check_params["name"], db,
-    )
-    if duplicate_tag:
-        raise HTTPException(status_code=400, detail="Tag with this name already exists")
     return crud.create_tag(tag, db)
 
 
 @app.get("/tags/", response_model=schemas.Tags)
 def read_tags(
-    club_id: int,
     archived: bool = False,
+    club_id: int = Depends(club_is_member),
     db: Session = Depends(get_db),
-    user: schemas.User = Depends(get_current_user),
 ):
-    """Read all tags for a club if user is in club (optional archived flag)"""
-    db_club = crud.read_club(user.id, club_id, db)
-    if not db_club:
-        raise HTTPException(status_code=403, detail="User not authorized to read tags")
     return crud.read_tags(club_id, archived, db)
 
 
 @app.get("/tag/{tag_id}/", response_model=schemas.Tag)
 def read_tag(
-    tag_id: int,
+    tag_id: int = Depends(tag_can_read),
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ):
-    """Read tag by ID if user is corresponding club"""
-    db_tag = crud.read_tag(user.id, tag_id, db)
-    if not db_tag:
-        raise HTTPException(status_code=400, detail="Tag not found")
-    return db_tag
+    return crud.read_tag(user.id, tag_id, db)
 
 
 @app.put("/tag/{tag_id}/", response_model=schemas.Tag)
 def update_tag(
-    tag_id: int,
     tag: schemas.TagUpdate,
+    tag_id: int = Depends(tag_is_admin),
     db: Session = Depends(get_db),
-    user: schemas.User = Depends(get_current_user),
 ):
-    """Club admins can update Tag data"""
-    db_tag = crud.read_tag(user.id, tag_id, db)
-    if db_tag is None:
-        raise HTTPException(status_code=400, detail="Tag not found")
-    roles.club_exists_and_is_admin(user.id, db_tag.club_id, db)
     return crud.update_tag(tag_id, tag, db)
 
 
 @app.delete("/tag/{tag_id}/", response_model=schemas.TagDelete)
 def delete_tag(
-    tag_id: int,
-    db: Session = Depends(get_db),
-    user: schemas.User = Depends(get_current_user),
+    tag_id: int = Depends(tag_is_admin), db: Session = Depends(get_db),
 ):
-    tag_to_delete = crud.read_tag(user.id, tag_id, db)
-    if tag_to_delete is None:
-        raise HTTPException(status_code=400, detail="Tag not deleted, tag not found")
-    roles.club_exists_and_is_admin(user.id, tag_to_delete.club_id, db)
     return crud.delete_tag(tag_id, db)

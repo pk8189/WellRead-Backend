@@ -8,7 +8,7 @@ def test_create_tag(client):
     response = api_util.create_tag()
     data = response.json()
     assert response.status_code == 400, response.text
-    assert data["detail"] == "Club does not exist or not member"
+    assert data["detail"] == "Club not found"
 
     api_util.create_club()
     response = api_util.create_tag(name="a new tag name")
