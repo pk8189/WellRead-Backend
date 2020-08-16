@@ -8,7 +8,7 @@ from app.database import Base, WellReadBase
 club_user_table = Table(
     "club_user_table",
     Base.metadata,
-    Column("user_id", String, ForeignKey("users.id"),),
+    Column("user_id", Integer, ForeignKey("users.id"),),
     Column("club_id", Integer, ForeignKey("clubs.id")),
 )
 

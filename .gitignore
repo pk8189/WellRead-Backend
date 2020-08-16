@@ -10,5 +10,5 @@ sql_app.db
 test.db
 
 # .env file for database settings
-wellread/.env
+.env
 
