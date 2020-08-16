@@ -33,10 +33,7 @@ def create_user(
 
 
 @app.get("/user/", response_model=schemas.User)
-def read_user(
-    user: schemas.User = Depends(dependencies.get_current_user),
-    db: Session = Depends(dependencies.get_db),
-):
+def read_user(user: schemas.User = Depends(dependencies.get_current_user),):
     return user
 
 
