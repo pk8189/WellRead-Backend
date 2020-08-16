@@ -1,4 +1,3 @@
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app import auth_utils, models, schemas
@@ -122,11 +121,8 @@ def read_note(user_id: int, note_id: int, db: Session) -> schemas.Note:
         .filter(models.Club.users.any(models.User.id == user_id))
         .first()
     )
-    if not db_note:
-        raise HTTPException(status_code=400, detail="Note not found")
-    if db_note.Note.private == True and db_note.Note.user_id != user_id:
-        raise HTTPException(status_code=401, detail="Not authorized")
-    return db_note.Note
+    if db_note:
+        return db_note.Note
 
 
 # Note READ
@@ -227,9 +223,8 @@ def read_tag(user_id: int, tag_id: int, db: Session) -> schemas.Tag:
         .filter(models.Club.users.any(models.User.id == user_id))
         .first()
     )
-    if not db_tag:
-        raise HTTPException(status_code=400, detail="Tag not found")
-    return db_tag.Tag
+    if db_tag:
+        return db_tag.Tag
 
 
 # Tag READ
