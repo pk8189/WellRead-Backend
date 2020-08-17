@@ -29,15 +29,29 @@ class Club(Base, WellReadBase):
     __tablename__ = "clubs"
 
     id = Column(Integer, primary_key=True, index=True)
-    book_title = Column(String, nullable=False)
+    name = Column(String, nullable=False)
     create_date = Column(DateTime, default=datetime.datetime.utcnow)
     is_active = Column(Boolean, default=True)
 
     admin_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     users = relationship("User", secondary=club_user_table, back_populates="clubs")
+    books = relationship("Book", back_populates="club", cascade="all, delete")
     notes = relationship("Note", back_populates="club", cascade="all, delete")
     tags = relationship("Tag", back_populates="club", cascade="all, delete")
+
+
+class Book(Base, WellReadBase):
+    __tablename__ = "books"
+
+    id = Column(Integer, primary_key=True, index=True)
+    book_title = Column(String, nullable=False)
+    author_name = Column(String, nullable=False)
+    archived = Column(Boolean, default=False)
+
+    club_id = Column(Integer, ForeignKey("clubs.id"), nullable=False)
+
+    club = relationship("Club", back_populates="books")
 
 
 note_tag_table = Table(
@@ -69,7 +83,7 @@ class Tag(Base, WellReadBase):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
+    name = Column(String, nullable=False)
     create_date = Column(DateTime, default=datetime.datetime.utcnow)
     archived = Column(Boolean, default=False)
 

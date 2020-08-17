@@ -82,12 +82,56 @@ def user_join(
     return crud.add_user_to_club(club_id, user.id, db)
 
 
+@app.put("/club/{club_id}/add_book/{book_id}/", response_model=schemas.Club)
+def book_add(
+    club_id: int, book_id: int, db: Session = Depends(dependencies.get_db),
+):
+    return crud.add_book_to_club(club_id, book_id, db)
+
+
 @app.delete("/club/{club_id}/", response_model=schemas.ClubDelete)
 def delete_club(
     club_id: int = Depends(dependencies.club_is_admin),
     db: Session = Depends(dependencies.get_db),
 ):
     return crud.delete_club(club_id, db)
+
+
+@app.post("/book/", response_model=schemas.Book)
+def create_book(
+    book: schemas.BookCreate,
+    db: Session = Depends(dependencies.get_db),
+    user: schemas.User = Depends(dependencies.get_current_user),
+):
+    return crud.create_book(book, db)
+
+
+@app.get("/book/{book_id}/", response_model=schemas.Book)
+def read_book(
+    book_id: int,
+    db: Session = Depends(dependencies.get_db),
+    user: schemas.User = Depends(dependencies.get_current_user),
+):
+    return crud.read_book(user.id, book_id, db)
+
+
+@app.put("/book/{book_id}/", response_model=schemas.Book)
+def update_book(
+    book_id: int,
+    book: schemas.BookUpdate,
+    db: Session = Depends(dependencies.get_db),
+    user: schemas.User = Depends(dependencies.get_current_user),
+):
+    return crud.update_book(book_id, book, db)
+
+
+@app.delete("/book/{book_id}/", response_model=schemas.BookDelete)
+def delete_book(
+    book_id: int,
+    db: Session = Depends(dependencies.get_db),
+    user: schemas.User = Depends(dependencies.get_current_user),
+):
+    return crud.delete_book(book_id, db)
 
 
 @app.post("/note/", response_model=schemas.Note)

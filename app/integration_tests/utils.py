@@ -46,9 +46,23 @@ class MockApiRequests:
         body = self.prep_kwargs(locals())
         return self.client.post("/user/", json=body,)
 
-    def create_club(self, book_title="A merry book"):
+    def create_club(self, name="A merry club"):
         body = self.prep_kwargs(locals())
         return self.client.post("/club/", json=body,)
+
+    def create_book(self, book_title="Book title", author_name="Chinua Acb", club_id=1):
+        body = self.prep_kwargs(locals())
+        return self.client.post("/book/", json=body,)
+
+    def update_book(
+        self,
+        book_id=1,
+        book_title="Book title II",
+        author_name="New author",
+        archived=False,
+    ):
+        body = self.prep_kwargs(locals())
+        return self.client.put(f"/book/{book_id}/", json=body,)
 
     def create_note(
         self, content="Oh my, such a lovely note!", club_id=1, private=False

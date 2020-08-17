@@ -89,12 +89,61 @@ def add_user_to_club(club_id: int, user_id: int, db: Session) -> schemas.Club:
     return db_club
 
 
+# Club UPDATE
+def add_book_to_club(club_id: int, book_id: int, db: Session) -> schemas.Club:
+    db_club = db.query(models.Club).filter(models.Club.id == club_id).first()
+    db_book = db.query(models.Book).filter(models.Book.id == book_id).first()
+    db_club.books.append(db_book)
+    db.commit()
+    db.refresh(db_club)
+    return db_club
+
+
 # Club DELETE
 def delete_club(club_id: int, db: Session) -> schemas.Club:
     db_club = db.query(models.Club).filter(models.Club.id == club_id).first()
     db.delete(db_club)
     db.commit()
     return db_club
+
+
+# Book CREATE
+def create_book(book: schemas.BookCreate, db: Session) -> schemas.Book:
+    db_book = models.Book(**book.dict())
+    db.add(db_book)
+    db.commit()
+    db.refresh(db_book)
+    return db_book
+
+
+# Book READ
+def read_book(user_id: int, book_id: int, db: Session) -> schemas.Book:
+    db_book = (
+        db.query(models.Book, models.Club)
+        .filter(models.Book.id == book_id)
+        .filter(models.Club.users.any(models.User.id == user_id))
+        .first()
+    )
+    if db_book:
+        return db_book.Book
+
+
+# Book UPDATE
+def update_book(book_id: int, book: schemas.BookUpdate, db: Session) -> schemas.Book:
+    db_book = db.query(models.Book).filter(models.Book.id == book_id).first()
+    remove_nones = {k: v for k, v in book.dict().items() if v is not None}
+    db_book.update(remove_nones)
+    db.commit()
+    db.refresh(db_book)
+    return db_book
+
+
+# Book DELETE
+def delete_book(book_id: int, db: Session) -> schemas.Book:
+    db_book = db.query(models.Book).filter(models.Book.id == book_id).first()
+    db.delete(db_book)
+    db.commit()
+    return db_book
 
 
 # Note CREATE

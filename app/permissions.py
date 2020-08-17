@@ -56,6 +56,26 @@ class Club:
             )
 
 
+class Book:
+    def __init__(self, db: Session, user: schemas.User, id: int):
+        self.id = id
+        self.db = db
+        self.user = user
+
+    def read(self) -> schemas.Note:
+        db_book = crud.read_book(self.user.id, self.id, self.db)
+        if db_book is None:
+            raise HTTPException(status_code=400, detail="Book not found")
+        return db_book
+
+    def is_admin(self) -> bool:
+        db_book = self.read()
+        if db_book.club.admin_user_id != self.user.id:
+            raise HTTPException(
+                status_code=403, detail="Unauthorized, user is not club admin",
+            )
+
+
 class Note:
     def __init__(self, db: Session, user: schemas.User, id: int):
         self.id = id
