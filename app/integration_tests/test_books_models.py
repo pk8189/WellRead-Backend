@@ -19,28 +19,18 @@ def test_read_books(client):
     api_util.create_book(book_title="test1", author_name="itsame")
     assert client.get("/book/1/").json()["book_title"] == "test1"
     assert client.get("/book/1/").json()["author_name"] == "itsame"
-    assert client.get("/book/1/").json()["archived"] == False
 
 
-def test_update_books(client):
+def test_add_and_remove_book_from_user(client):
     api_util = utils.MockApiRequests(client)
     api_util.create_user_and_authenticate()
-    api_util.create_book()
-
-    api_util.update_book(
-        archived=True, book_title="test1", author_name="itsame",
-    )
-    assert client.get("/book/1/").json()["book_title"] == "test1"
-    assert client.get("/book/1/").json()["author_name"] == "itsame"
-    assert client.get("/book/1/").json()["archived"] == True
-
-
-def test_delete_books(client):
-    api_util = utils.MockApiRequests(client)
-    api_util.create_user_and_authenticate()
-    api_util.create_club()
 
     book_id = api_util.create_book().json()["id"]
 
-    client.delete(f"/book/{book_id}/")
-    assert not client.get("/book/1/").json()
+    client.put(f"/user/book/{book_id}/add/")
+    assert len(client.get("/user/").json()["books"]) == 1
+    assert len(client.get(f"/book/{book_id}/").json()["users"]) == 1
+
+    client.put(f"/user/book/{book_id}/remove/")
+    assert len(client.get("/user/").json()["books"]) == 0
+    assert len(client.get(f"/book/{book_id}/").json()["users"]) == 0

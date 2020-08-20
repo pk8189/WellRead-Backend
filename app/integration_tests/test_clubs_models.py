@@ -56,12 +56,6 @@ def test_update_club_and_is_active_functionality(client):
 
     api_util.create_user2_and_authenticate()  # switch to user 2
     client.put(f"/club/1/join/")  # join the club
-    assert (
-        client.put("/club/1/", json={"is_active": False, "name": "Newish"}).json()[
-            "detail"
-        ]
-        == "Unauthorized, user is not club admin"
-    )
 
     api_util.authenticate()
     client.put("/club/1/", json={"is_active": False, "name": "Newish"})
@@ -79,15 +73,17 @@ def test_join_club(client):
     assert len(client.get("/club/1/").json()["users"]) == 2
 
 
-def test_add_book_to_club(client):
+def test_add_and_remove_book_to_club(client):
     api_util = utils.MockApiRequests(client)
     api_util.create_user_and_authenticate()
     club_id = api_util.create_club().json()["id"]
     book_id = api_util.create_book().json()["id"]
 
-    client.put(f"/club/{club_id}/add_book/{book_id}/")
-
+    client.put(f"/club/{club_id}/book/{book_id}/add/")
     assert len(client.get("/club/1/").json()["books"]) == 1
+
+    client.put(f"/club/{club_id}/book/{book_id}/remove/")
+    assert len(client.get("/club/1/").json()["books"]) == 0
 
 
 def test_delete_club(client):
@@ -103,7 +99,4 @@ def test_delete_club(client):
     api_util.create_user2_and_authenticate()  # switch to user 2
     client.put(f"/club/1/join/")  # join the club
 
-    assert (
-        client.delete("/club/1/").json()["detail"]
-        == "Unauthorized, user is not club admin"
-    )
+    assert client.delete("/club/1/").json()["detail"] == "Non-admin cannot delete club"

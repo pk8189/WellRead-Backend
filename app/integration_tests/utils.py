@@ -54,18 +54,8 @@ class MockApiRequests:
         body = self.prep_kwargs(locals())
         return self.client.post("/book/", json=body,)
 
-    def update_book(
-        self,
-        book_id=1,
-        book_title="Book title II",
-        author_name="New author",
-        archived=False,
-    ):
-        body = self.prep_kwargs(locals())
-        return self.client.put(f"/book/{book_id}/", json=body,)
-
     def create_note(
-        self, content="Oh my, such a lovely note!", club_id=1, private=False
+        self, content="Oh my, such a lovely note!", book_id=1, private=False
     ):
         body = self.prep_kwargs(locals())
         return self.client.post("/note/", json=body,)
@@ -77,13 +67,13 @@ class MockApiRequests:
         return self.client.put(f"/note/{note_id}/", json=body,)
 
     def add_tags_to_note(
-        self, note_id=1, tags=[1],
+        self, note_id=1, tags=[1], club_tags=[2],
     ):
         body = self.prep_kwargs(locals())
         return self.client.put(f"/note/{note_id}/tag/", json=body)
 
     def create_tag(
-        self, name="taggy boy", club_id=1,
+        self, name="taggy boy",
     ):
         body = self.prep_kwargs(locals())
         return self.client.post("/tag/", json=body)

@@ -38,7 +38,7 @@ def read_user(user: schemas.User = Depends(dependencies.get_current_user),):
     return user
 
 
-@app.put("/user/add_book/{book_id}/", response_model=schemas.User)
+@app.put("/user/book/{book_id}/add/", response_model=schemas.User)
 def add_book_to_user(
     book_id: int,
     db: Session = Depends(dependencies.get_db),
@@ -47,7 +47,7 @@ def add_book_to_user(
     return crud.update_user_add_book(user.id, book_id, db)
 
 
-@app.put("/user/remove_book/{book_id}/", response_model=schemas.User)
+@app.put("/user/book/{book_id}/remove/", response_model=schemas.User)
 def remove_book_from_user(
     book_id: int,
     db: Session = Depends(dependencies.get_db),
@@ -71,7 +71,7 @@ def read_book(
     db: Session = Depends(dependencies.get_db),
     user: schemas.User = Depends(dependencies.get_current_user),
 ):
-    return crud.read_book(book_id, db)
+    return crud.read_book(user.id, book_id, db)
 
 
 @app.post("/club/", response_model=schemas.Club)
@@ -178,15 +178,13 @@ def read_note(
 
 @app.get("/notes/me/", response_model=schemas.Notes)
 def read_my_notes(
-    club_id: int,
+    book_id: int,
     include_private: bool = True,
     include_archived: bool = False,
     db: Session = Depends(dependencies.get_db),
     user: schemas.User = Depends(dependencies.get_current_user),
 ):
-    return crud.read_personal_notes(
-        user.id, club_id, include_private, include_archived, db
-    )
+    return crud.read_my_notes(user.id, book_id, include_private, include_archived, db)
 
 
 @app.put("/note/{note_id}/", response_model=schemas.Note)
@@ -230,7 +228,7 @@ def create_tag(
 @app.get("/tag/{tag_id}/", response_model=schemas.Tag)
 def read_tag(
     tag_id: int,
-    book_id: Optional[int],
+    book_id: Optional[int] = None,
     db: Session = Depends(dependencies.get_db),
     user: schemas.User = Depends(dependencies.get_current_user),
 ):

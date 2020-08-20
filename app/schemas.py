@@ -59,7 +59,7 @@ class TagBase(BaseModel):
     name: str
     create_date: datetime
     archived: bool
-    used_id: int
+    user_id: int
 
     class Config:
         orm_mode = True
@@ -122,7 +122,7 @@ class BookDelete(BookBase):
 # Club schemas
 class Club(ClubBase):
     users: List[UserBase]
-    tags: List[TagBase]
+    club_tags: List[ClubTagBase]
     books: List[BookBase]
 
 
@@ -147,8 +147,6 @@ class ClubDelete(ClubBase):
 
 # Note schemas
 class Note(NoteBase):
-    user: UserBase
-    book: BookBase
     tags: List[TagBase]
     club_tags: List[ClubTagBase]
 

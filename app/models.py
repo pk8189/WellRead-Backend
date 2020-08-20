@@ -21,8 +21,8 @@ class User(Base, WellReadBase):
     clubs = relationship(
         "Club", back_populates="users", secondary=associations.clubs_users
     )
-    tags = relationship("Tag", back_populates="user_id")
-    notes = relationship("Note", back_populates="user_id")
+    tags = relationship("Tag")
+    notes = relationship("Note")
 
 
 class Book(Base, WellReadBase):
@@ -46,8 +46,8 @@ class Book(Base, WellReadBase):
     users = relationship(
         "User", back_populates="books", secondary=associations.books_users
     )
-    notes = relationship("Note", back_populates="book")
-    club_tags = relationship("ClubTag", back_populates="book")
+    notes = relationship("Note")
+    club_tags = relationship("ClubTag")
 
 
 class Club(Base, WellReadBase):
@@ -67,7 +67,7 @@ class Club(Base, WellReadBase):
     books = relationship(
         "Book", back_populates="clubs", secondary=associations.books_clubs
     )
-    club_tags = relationship("ClubTag", back_populates="club")
+    club_tags = relationship("ClubTag")
 
 
 class Note(Base, WellReadBase):
@@ -80,15 +80,13 @@ class Note(Base, WellReadBase):
     archived = Column(Boolean, default=False)
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    user = relationship("User", back_populates="notes")
     book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
-    book = relationship("Book", back_populates="notes")
 
     tags = relationship(
         "Tag", back_populates="notes", secondary=associations.notes_tags
     )
     club_tags = relationship(
-        "Club_Tag", back_populates="notes", secondary=associations.club_tags_notes
+        "ClubTag", back_populates="notes", secondary=associations.club_tags_notes
     )
 
 
@@ -101,7 +99,6 @@ class Tag(Base, WellReadBase):
     archived = Column(Boolean, default=False)
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    user = relationship("User", back_populates="tags")
 
     books = relationship(
         "Book", back_populates="tags", secondary=associations.books_tags
@@ -120,9 +117,7 @@ class ClubTag(Base, WellReadBase):
     archived = Column(Boolean, default=False)
 
     book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
-    book = relationship("Book", back_populates="club_tags")
     club_id = Column(Integer, ForeignKey("clubs.id"), nullable=False)
-    club = relationship("Club", back_populates="club_tags")
 
     notes = relationship(
         "Note", back_populates="club_tags", secondary=associations.club_tags_notes

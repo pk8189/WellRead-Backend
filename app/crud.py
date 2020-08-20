@@ -84,12 +84,15 @@ def create_club(user_id: int, club: schemas.ClubCreate, db: Session) -> schemas.
 
 # Club READ
 def read_club(user_id: int, club_id: int, db: Session) -> schemas.Club:
-    return (
+    db_query = (
         db.query(models.Club)
         .filter(models.Club.id == club_id)
         .filter(models.Club.users.any(models.User.id == user_id))
         .first()
     )
+    if not db_query:
+        raise HTTPException(status_code=400, detail="Club not found")
+    return db_query
 
 
 # Club READ
@@ -112,6 +115,8 @@ def update_club(
         .filter(models.Club.users.any(models.User.id == user_id))
         .first()
     )
+    if not db_club:
+        raise HTTPException(status_code=400, detail="Club not found")
     remove_nones = {k: v for k, v in club.dict().items() if v is not None}
     db_club.update(remove_nones)
     db.commit()
@@ -168,7 +173,7 @@ def remove_book_from_club(
             status_code=400, detail="Non-admin cannot remove book from club"
         )
     db_book = db.query(models.Book).filter(models.Book.id == book_id).first()
-    db_club.books.append(db_book)
+    db_club.books.remove(db_book)
     db.commit()
     db.refresh(db_club)
     return db_club
@@ -203,13 +208,15 @@ def read_note(user_id: int, note_id: int, db: Session) -> schemas.Note:
     wrote the note.
     """
     db_note = db.query(models.Note).filter(models.Note.id == note_id).first()
+    if not db_note:
+        raise HTTPException(400, detail="Note not found")
     if db_note.user_id != user_id and db_note.private:
         raise HTTPException(403, detail="Cannot read private note")
     return db_note
 
 
 # Note READ
-def read_personal_notes(
+def read_my_notes(
     user_id: int,
     book_id: int,
     include_private: bool,
@@ -255,13 +262,19 @@ def add_tags_to_note(
         .filter(models.Note.user_id == user_id)
         .first()
     )
+    if not db_note:
+        raise HTTPException(status_code=400, detail="Note not found")
     for tag_id in tags.tags:
         db_tag = db.query(models.Tag).filter(models.Tag.id == tag_id).first()
+        if not db_tag:
+            raise HTTPException(status_code=400, detail="Tag not found")
         db_note.tags.append(db_tag)
     for club_tag_id in tags.club_tags:
         db_club_tag = (
             db.query(models.ClubTag).filter(models.ClubTag.id == club_tag_id).first()
         )
+        if not db_club_tag:
+            raise HTTPException(status_code=400, detail="ClubTag not found")
         db_note.club_tags.append(db_club_tag)
     db.add(db_note)
     db.commit()
@@ -285,8 +298,10 @@ def delete_note(user_id: int, note_id: int, db: Session) -> schemas.Note:
 
 
 # Tag CREATE
-def create_tag(tag: schemas.TagCreate, db: Session) -> schemas.Tag:
-    db_tag = models.Tag(**tag.dict())
+def create_tag(user_id: int, tag: schemas.TagCreate, db: Session) -> schemas.Tag:
+    tag_dict = tag.dict()
+    tag_dict["user_id"] = user_id
+    db_tag = models.Tag(**tag_dict)
     db.add(db_tag)
     db.commit()
     db.refresh(db_tag)
@@ -299,7 +314,6 @@ def read_tag(user_id: int, tag_id: int, book_id: int, db: Session) -> schemas.Ta
         db.query(models.Tag)
         .filter(models.Tag.id == tag_id)
         .filter(models.Tag.user_id == user_id)
-        .first()
     )
     if book_id:
         db_query.filter(models.Tag.books.any(models.Book.id == book_id))

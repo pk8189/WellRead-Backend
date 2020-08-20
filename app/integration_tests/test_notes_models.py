@@ -1,19 +1,15 @@
 from app.integration_tests import utils
 
 
-def create_note(client):
+def test_create_note(client):
     api_util = utils.MockApiRequests(client)
     api_util.create_user_and_authenticate()
+    api_util.create_book()
 
-    no_club_res = api_util.create_note()
-    assert no_club_res.status_code == 400
-    assert no_club_res.json()["detail"] == "Club ID does not exist"
-
-    api_util.create_club().json()["id"]
-    response = api_util.create_note()
+    response = api_util.create_note(content="test note")
     assert response.status_code == 200, response.text
     data = response.json()
-    assert data["content"] == "Oh my, such a lovely note!"
+    assert data["content"] == "test note"
     assert data["private"] == False
     assert data["archived"] == False
 
@@ -51,122 +47,89 @@ def test_read_personal_notes(client):
     api_util.create_user_and_authenticate()
     api_util.create_club()
 
-    api_util.create_note(content="test1")
+    api_util.create_note(content="public_not_archived")
+
     for_archiving_id = api_util.create_note(content="test2").json()["id"]
-    api_util.update_note(content="test2", note_id=for_archiving_id, archived=True)
-    api_util.create_note(content="test3", private=True)
+    api_util.update_note(
+        content="public_archived", note_id=for_archiving_id, archived=True
+    )
+    api_util.create_note(content="private_not_archived", private=True)
     private_for_archiving_id = api_util.create_note(
         content="test4", private=True
     ).json()["id"]
     api_util.update_note(
-        content="test4", note_id=private_for_archiving_id, archived=True
+        content="private_archived",
+        note_id=private_for_archiving_id,
+        private=True,
+        archived=True,
     )
 
-    public_non_archive_res = client.get(f"/notes/me/?club_id=1").json()
-    assert len(public_non_archive_res["notes"]) == 1
+    private_not_archived = client.get(f"/notes/me/?book_id=1").json()
+    assert [note["content"] for note in private_not_archived["notes"]] == [
+        "public_not_archived",
+        "private_not_archived",
+    ]
+
     public_including_archived_res = client.get(
-        f"/notes/me/?club_id=1&archived=True"
+        f"/notes/me/?book_id=1&include_archived=True"
     ).json()
     assert [note["content"] for note in public_including_archived_res["notes"]] == [
-        "test1",
-        "test2",
-        "test4",
-    ]  # test3 is private
-    including_private_and_non_archive_res = client.get(
-        f"/notes/me/?club_id=1&private=True"
+        "public_not_archived",
+        "public_archived",
+        "private_not_archived",
+        "private_archived",
+    ]
+
+    public_not_including_archived_res = client.get(
+        f"/notes/me/?book_id=1&include_private=False&include_archived=True"
     ).json()
-    assert [
-        note["content"] for note in including_private_and_non_archive_res["notes"]
-    ] == [
-        "test1",
-        "test3",
-    ]  # test2 and test4 are archived
-    including_private_and_archived_notes = client.get(
-        f"/notes/me/?club_id=1&private=True&archived=True"
-    ).json()
-    assert [
-        note["content"] for note in including_private_and_archived_notes["notes"]
-    ] == ["test1", "test2", "test3", "test4"]
-
-
-def test_read_team_notes(client):
-    api_util = utils.MockApiRequests(client)
-    api_util.create_user_and_authenticate()
-    club_id = api_util.create_club().json()["id"]
-
-    api_util.create_note(content="test1")
-    api_util.create_note(content="shh it is private", private=True)
-
-    api_util.create_user2_and_authenticate()
-    client.put(f"/club/{club_id}/join/")  # join the club
-    for_archiving_id = api_util.create_note(content="test2").json()["id"]
-    api_util.update_note(content="test2", note_id=for_archiving_id, archived=True)
-
-    shared_non_archive_res = client.get(f"/notes/club/?club_id=1").json()
-    assert [note["content"] for note in shared_non_archive_res["notes"]] == ["test1"]
-    shared_archive_res = client.get(f"/notes/club/?club_id=1&archived=True").json()
-    assert [note["content"] for note in shared_archive_res["notes"]] == [
-        "test1",
-        "test2",
+    assert [note["content"] for note in public_not_including_archived_res["notes"]] == [
+        "public_not_archived",
+        "public_archived",
     ]
 
 
 def test_add_tags_to_note(client):
     api_util = utils.MockApiRequests(client)
     api_util.create_user_and_authenticate()
-    club_id = api_util.create_club().json()["id"]
 
     note_id = api_util.create_note(content="test1").json()["id"]
     tag_id = api_util.create_tag(name="testtag1").json()["id"]
 
-    client.put(f"/note/{note_id}/tag/", json={"tags": [tag_id]})
+    client.put(f"/note/{note_id}/tag/", json={"tags": [tag_id], "club_tags": []})
     get_notes = client.get(f"/note/{note_id}/").json()
     assert get_notes["tags"][0]["name"] == "testtag1"
+
     get_tags = client.get(f"/tag/{tag_id}/").json()
     assert get_tags["name"] == "testtag1"
 
-    invalid_tag_res = client.put(f"/note/{note_id}/tag/", json={"tags": [100]}).json()
+    invalid_tag_res = client.put(
+        f"/note/{note_id}/tag/", json={"tags": [100], "club_tags": []}
+    ).json()
     assert invalid_tag_res["detail"] == "Tag not found"
 
-    invalid_note_res = client.put(f"/note/100/tag/", json={"tags": [1]}).json()
-    assert invalid_note_res["detail"] == "Note not found"
-
-    api_util.create_user2_and_authenticate()
-    client.put(f"/club/{club_id}/join/")  # join the club
-    another_user_tagging_notes = client.put(
-        f"/note/{note_id}/tag/", json={"tags": [tag_id]}
+    invalid_note_res = client.put(
+        f"/note/100/tag/", json={"tags": [1], "club_tags": []}
     ).json()
-    assert (
-        another_user_tagging_notes["detail"]
-        == "Unauthorized, user is not owner of note"
-    )
-
-    note_id = api_util.create_note(content="test2").json()["id"]
-    client.put(f"/note/{note_id}/tag/", json={"tags": [tag_id]}).json()
-    get_tag = client.get(f"/tag/{tag_id}/").json()
-    assert len(get_tag["notes"]) == 2
+    assert invalid_note_res["detail"] == "Note not found"
 
 
 def test_delete_notes(client):
     api_util = utils.MockApiRequests(client)
     api_util.create_user_and_authenticate()
-    club_id = api_util.create_club().json()["id"]
 
     note_id = api_util.create_note(content="test1").json()["id"]
     tag_id = api_util.create_tag(name="testtag1").json()["id"]
-    client.put(f"/note/{note_id}/tag/", json={"tags": [tag_id]})
+    client.put(f"/note/{note_id}/tag/", json={"tags": [tag_id], "club_tags": []})
 
     client.delete(f"/note/{note_id}/")
     assert client.get(f"/note/{note_id}/").json()["detail"] == "Note not found"
-    assert not len(client.get(f"/notes/club/?club_id=1").json()["notes"])
-    assert not len(client.get(f"/tag/{tag_id}/").json()["notes"])
+    assert not client.get(f"/notes/club/?book_id=1").json().get("notes")
+    assert not client.get(f"/tag/{tag_id}/").json().get("notes")
 
     user_1_note_id = api_util.create_note(content="test delete").json()["id"]
 
     api_util.create_user2_and_authenticate()  # create/login as another user
-    client.put(f"/club/{club_id}/join/")  # join the club
-
     assert (
-        client.delete(f"/note/{user_1_note_id}/").json()["detail"]
-        == "Unauthorized, user is not owner of note"
+        client.delete(f"/note/{user_1_note_id}/").json()["detail"] == "Note not found"
     )
