@@ -21,6 +21,15 @@ class UserBase(BaseModel):
         orm_mode = True
 
 
+class BookBase(BaseModel):
+    id: int
+    book_title: str
+    author_name: str
+
+    class Config:
+        orm_mode = True
+
+
 class ClubBase(BaseModel):
     id: int
     name: str
@@ -32,25 +41,14 @@ class ClubBase(BaseModel):
         orm_mode = True
 
 
-class BookBase(BaseModel):
-    id: int
-    book_title: str
-    author_name: str
-    archived: bool
-    club_id: int
-
-    class Config:
-        orm_mode = True
-
-
 class NoteBase(BaseModel):
     id: int
     create_date: datetime
     content: str
-    user_id: int
-    club_id: int
     private: bool
     archived: bool
+    user_id: int
+    book_id: int
 
     class Config:
         orm_mode = True
@@ -61,67 +59,54 @@ class TagBase(BaseModel):
     name: str
     create_date: datetime
     archived: bool
+    used_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class ClubTagBase(BaseModel):
+    id: int
+    name: str
+    create_date: datetime
+    archived: bool
+    book_id: int
     club_id: int
 
     class Config:
         orm_mode = True
 
 
-# Tag schemas
-class TagCreate(BaseModel):
-    name: str
-    club_id: int
+# User schemas
+class User(UserBase):
+    books: List[BookBase]
+    tags: List[TagBase]
+    clubs: List[ClubBase]
+    notes: List[NoteBase]
 
 
-class TagUpdate(BaseModel):
-    name: str
-    archived: bool
+class DBUser(UserBase):
+    hashed_password: str
 
 
-class TagDelete(TagBase):
-    pass
+class UserCreate(BaseModel):
+    full_name: str
+    email: str
+    password: str
 
 
-# Note schemas
-class NoteCreate(BaseModel):
-    content: str
-    club_id: int
-    private: Optional[bool]
-
-
-class NoteUpdate(BaseModel):
-    content: str
-    private: Optional[bool]
-    archived: Optional[bool]
-
-
-class NoteAddTags(BaseModel):
-    tags: List[int]
-
-
-class NoteDelete(NoteBase):
-    pass
-
-
-# Club schemas
-class ClubCreate(BaseModel):
-    name: str
-
-
-class ClubUpdate(BaseModel):
-    name: Optional[str] = None
-    is_active: Optional[bool] = None
-    current_book_id: Optional[bool] = None
-
-
-class ClubDelete(ClubBase):
-    pass
+# Book schemas
+class Book(BookBase):
+    tags: List[TagBase]
+    clubs: List[ClubBase]
+    users: List[UserBase]
+    notes: List[NoteBase]
+    club_tags: List[ClubTagBase]
 
 
 class BookCreate(BaseModel):
     book_title: str
     author_name: str
-    club_id: int
 
 
 class BookUpdate(BaseModel):
@@ -134,21 +119,7 @@ class BookDelete(BookBase):
     pass
 
 
-class UserCreate(BaseModel):
-    full_name: str
-    email: str
-    password: str
-
-
-class DBUser(UserBase):
-    hashed_password: str
-
-
-class User(UserBase):
-    clubs: List[ClubBase]
-    notes: List[NoteBase]
-
-
+# Club schemas
 class Club(ClubBase):
     users: List[UserBase]
     tags: List[TagBase]
@@ -159,24 +130,97 @@ class Clubs(BaseModel):
     clubs: List[Club]
 
 
-class Book(BookBase):
-    club: ClubBase
+class ClubCreate(BaseModel):
+    name: str
+    # admin_user_id comes from token
 
 
+class ClubUpdate(BaseModel):
+    name: Optional[str] = None
+    is_active: Optional[bool] = None
+    current_book: Optional[bool] = None
+
+
+class ClubDelete(ClubBase):
+    pass
+
+
+# Note schemas
 class Note(NoteBase):
-    tags: List[TagBase]
     user: UserBase
-    club: ClubBase
+    book: BookBase
+    tags: List[TagBase]
+    club_tags: List[ClubTagBase]
 
 
 class Notes(BaseModel):
     notes: List[Note]
 
 
+class NoteCreate(BaseModel):
+    content: str
+    book_id: int
+    private: Optional[bool]
+
+
+class NoteUpdate(BaseModel):
+    content: str
+    private: Optional[bool]
+    archived: Optional[bool]
+
+
+class NoteAddTagsAndClubTags(BaseModel):
+    tags: List[int]
+    club_tags: List[int]
+
+
+class NoteDelete(NoteBase):
+    pass
+
+
+# Tag schemas
 class Tag(TagBase):
-    club: ClubBase
+    books: List[BookBase]
     notes: List[NoteBase]
 
 
 class Tags(BaseModel):
     tags: List[Tag]
+
+
+class TagCreate(BaseModel):
+    name: str
+
+
+class TagUpdate(BaseModel):
+    name: str
+    archived: bool
+
+
+class TagDelete(TagBase):
+    pass
+
+
+class ClubTag(ClubTagBase):
+    book: BookBase
+    club: ClubBase
+    notes: List[NoteBase]
+
+
+class ClubTags(BaseModel):
+    club_tags: List[ClubTag]
+
+
+class ClubTagCreate(BaseModel):
+    name: str
+    book_id: int
+    club_id: int
+
+
+class ClubTagUpdate(BaseModel):
+    name: str
+    archived: bool
+
+
+class ClubTagDelete(ClubTagBase):
+    pass

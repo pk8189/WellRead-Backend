@@ -50,7 +50,7 @@ class MockApiRequests:
         body = self.prep_kwargs(locals())
         return self.client.post("/club/", json=body,)
 
-    def create_book(self, book_title="Book title", author_name="Chinua Acb", club_id=1):
+    def create_book(self, book_title="Book title", author_name="Chinua Acb"):
         body = self.prep_kwargs(locals())
         return self.client.post("/book/", json=body,)
 
