@@ -15,6 +15,15 @@ class User(Base, WellReadBase):
     email = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
 
+    # self-referential many-to-many following / followers
+    following = relationship(
+        "User",
+        lambda: associations.user_following,
+        primaryjoin=lambda: User.id == associations.user_following.c.user_id,
+        secondaryjoin=lambda: User.id == associations.user_following.c.following_id,
+        backref="followers",
+    )
+
     books = relationship(
         "Book", back_populates="users", secondary=associations.books_users
     )

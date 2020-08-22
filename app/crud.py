@@ -52,6 +52,32 @@ def update_user_remove_boook(user_id: int, book_id: int, db: Session) -> schemas
     return db_user
 
 
+# User UPDATE
+def follow_user(follower_id: int, following_id: int, db: Session) -> schemas.User:
+    follower_user = db.query(models.User).filter(models.User.id == follower_id).first()
+    following_user = (
+        db.query(models.User).filter(models.User.id == following_id).first()
+    )
+    following_user.followers.append(follower_user)
+    db.commit()
+    db.refresh(following_user)
+    return schemas.UserFollow(id=following_user.id, full_name=following_user.full_name)
+
+
+# User UPDATE
+def unfollow_user(follower_id: int, following_id: int, db: Session) -> schemas.User:
+    follower_user = db.query(models.User).filter(models.User.id == follower_id).first()
+    unfollowed_user = (
+        db.query(models.User).filter(models.User.id == following_id).first()
+    )
+    unfollowed_user.followers.remove(follower_user)
+    db.commit()
+    db.refresh(unfollowed_user)
+    return schemas.UserFollow(
+        id=unfollowed_user.id, full_name=unfollowed_user.full_name
+    )
+
+
 # Book CREATE
 def create_book(used_id: int, book: schemas.BookCreate, db: Session) -> schemas.Book:
     db_book = models.Book(**book.dict())
@@ -317,7 +343,7 @@ def read_tag(user_id: int, tag_id: int, book_id: int, db: Session) -> schemas.Ta
     )
     if book_id:
         db_query.filter(models.Tag.books.any(models.Book.id == book_id))
-    if not db_query:
+    if not db_query.first():
         raise HTTPException(status_code=400, detail="Tag not found")
     return db_query.first()
 
@@ -365,8 +391,18 @@ def delete_tag(user_id: int, tag_id: int, db: Session) -> schemas.Tag:
 
 
 # ClubTag CREATE
-def create_club_tag(club_tag: schemas.TagCreate, db: Session) -> schemas.Tag:
-    db_club_tag = models.Tag(**club_tag.dict())
+def create_club_tag(
+    user_id: int, club_tag: schemas.TagCreate, db: Session
+) -> schemas.ClubTag:
+    db_club = (
+        db.query(models.Club)
+        .filter(models.Club.id == club_tag.club_id)
+        .filter(models.Club.users.any(models.User.id == user_id))
+        .first()
+    )
+    if not db_club:
+        raise HTTPException(status_code=400, detail="Club not found")
+    db_club_tag = models.ClubTag(**club_tag.dict())
     db.add(db_club_tag)
     db.commit()
     db.refresh(db_club_tag)
@@ -374,30 +410,30 @@ def create_club_tag(club_tag: schemas.TagCreate, db: Session) -> schemas.Tag:
 
 
 # ClubTag READ
-def read_club_tag(user_id: int, club_tag_id: int, db: Session) -> schemas.Tag:
-    db_query = (
-        db.query(models.ClubTag)
-        .filter(models.ClubTag.id == club_tag_id)
-        .filter(models.ClubTag.user_id == user_id)
-        .first()
-    )
+def read_club_tag(user_id: int, club_tag_id: int, db: Session) -> schemas.ClubTag:
+    db_query = db.query(models.ClubTag).filter(models.ClubTag.id == club_tag_id).first()
     if not db_query:
-        raise HTTPException(status_code=400, detail="Tag not found")
+        raise HTTPException(status_code=400, detail="ClubTag not found")
     return db_query
 
 
 # ClubTag READ
 def read_club_tags(
-    user_id: int, book_id: int, archived: bool, db: Session
+    user_id: int, club_id: int, book_id: int, archived: bool, db: Session
 ) -> schemas.ClubTags:
     query_results = (
         db.query(models.ClubTag)
-        .filter(models.ClubTag.book_id == book_id)
+        .filter(models.ClubTag.club_id == club_id)
         .filter(models.Club.users.any(models.User.id == user_id))
     )
+    if book_id:
+        query_results = query_results.filter(models.ClubTag.book_id == book_id)
     if not archived:
-        query_results = query_results.filter(models.Tag.archived == False)
-    return schemas.Tags(tags=query_results.all())
+        query_results = query_results.filter(models.ClubTag.archived == False)
+
+    if not query_results.all():
+        raise HTTPException(status_code=400, detail="ClubTag not found")
+    return schemas.ClubTags(club_tags=query_results.all())
 
 
 # ClubTag UPDATE
@@ -407,7 +443,7 @@ def update_club_tag(
     db_club_tag = (
         db.query(models.ClubTag)
         .filter(models.ClubTag.id == club_tag_id)
-        .filter(models.ClubTag.club.admin_user_id == user_id)
+        .filter(models.Club.admin_user_id == user_id)
         .first()
     )
     if not db_club_tag:
@@ -420,11 +456,11 @@ def update_club_tag(
 
 
 # ClubTag DELETE
-def delete_club_tag(user_id: int, club_tag_id: int, db: Session) -> schemas.Tag:
+def delete_club_tag(user_id: int, club_tag_id: int, db: Session) -> schemas.ClubTag:
     db_club_tag = (
         db.query(models.ClubTag)
         .filter(models.ClubTag.id == club_tag_id)
-        .filter(models.ClubTag.club.admin_user_id == user_id)
+        .filter(models.Club.admin_user_id == user_id)
         .first()
     )
     if not db_club_tag:

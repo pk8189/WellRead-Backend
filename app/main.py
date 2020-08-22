@@ -56,6 +56,24 @@ def remove_book_from_user(
     return crud.update_user_remove_boook(user.id, book_id, db)
 
 
+@app.put("/user/relationship/{user_id}/follow/", response_model=schemas.UserFollow)
+def follow_user(
+    user_id: int,
+    db: Session = Depends(dependencies.get_db),
+    user: schemas.User = Depends(dependencies.get_current_user),
+):
+    return crud.follow_user(user.id, user_id, db)
+
+
+@app.put("/user/relationship/{user_id}/unfollow/", response_model=schemas.UserFollow)
+def unfollow_user(
+    user_id: int,
+    db: Session = Depends(dependencies.get_db),
+    user: schemas.User = Depends(dependencies.get_current_user),
+):
+    return crud.unfollow_user(user.id, user_id, db)
+
+
 @app.post("/book/", response_model=schemas.Book)
 def create_book(
     book: schemas.BookCreate,
@@ -284,7 +302,7 @@ def read_club_tag(
 @app.get("/club_tags/", response_model=schemas.ClubTags)
 def read_club_tags(
     club_id: int,
-    book_id: Optional[int],
+    book_id: Optional[int] = None,
     archived: bool = False,
     db: Session = Depends(dependencies.get_db),
     user: schemas.User = Depends(dependencies.get_current_user),
@@ -304,8 +322,8 @@ def update_club_tag(
 
 @app.delete("/club_tag/{club_tag_id}/", response_model=schemas.ClubTagDelete)
 def delete_club_tag(
-    tag_id: int,
+    club_tag_id: int,
     db: Session = Depends(dependencies.get_db),
     user: schemas.User = Depends(dependencies.get_current_user),
 ):
-    return crud.delete_club_tag(user.id, tag_id, db)
+    return crud.delete_club_tag(user.id, club_tag_id, db)

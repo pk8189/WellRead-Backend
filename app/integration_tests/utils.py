@@ -83,3 +83,15 @@ class MockApiRequests:
     ):
         body = self.prep_kwargs(locals())
         return self.client.put(f"/tag/{tag_id}/", json=body)
+
+    def create_club_tag(
+        self, name="club taggy boy", book_id=1, club_id=1,
+    ):
+        body = self.prep_kwargs(locals())
+        return self.client.post("/club_tag/", json=body)
+
+    def update_club_tag(
+        self, club_tag_id=1, name="a new clubtag name", archived=False,
+    ):
+        body = self.prep_kwargs(locals())
+        return self.client.put(f"/club_tag/{club_tag_id}/", json=body)

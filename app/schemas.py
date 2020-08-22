@@ -78,11 +78,18 @@ class ClubTagBase(BaseModel):
 
 
 # User schemas
+class UserFollow(BaseModel):
+    id: int
+    full_name: str
+
+
 class User(UserBase):
     books: List[BookBase]
     tags: List[TagBase]
     clubs: List[ClubBase]
     notes: List[NoteBase]
+    following: List[UserBase]
+    followers: List[UserBase]
 
 
 class DBUser(UserBase):
@@ -200,8 +207,6 @@ class TagDelete(TagBase):
 
 
 class ClubTag(ClubTagBase):
-    book: BookBase
-    club: ClubBase
     notes: List[NoteBase]
 
 

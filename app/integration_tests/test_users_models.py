@@ -38,3 +38,35 @@ def test_get_user(client):
     assert not data.get("password") and not data.get(
         "hashed_password"
     )  # make sure password is never sent
+
+
+def test_follow_user(client):
+    api_util = utils.MockApiRequests(client)
+    api_util.create_user_and_authenticate()
+    user1_id = client.get("/user/").json()["id"]
+
+    api_util.create_user2_and_authenticate()
+    user2_id = client.get("/user/").json()["id"]
+    client.put(f"/user/relationship/{user1_id}/follow/")
+    assert client.get("/user/").json()["following"][0]["id"] == user1_id
+
+    api_util.create_user_and_authenticate()
+    assert client.get("/user/").json()["followers"][0]["id"] == user2_id
+
+
+def test_unfollow_user(client):
+    api_util = utils.MockApiRequests(client)
+    api_util.create_user_and_authenticate()
+    user1_id = client.get("/user/").json()["id"]
+    api_util.create_user2_and_authenticate()
+    user2_id = client.get("/user/").json()["id"]
+    client.put(f"/user/relationship/{user1_id}/follow/")
+    api_util.create_user_and_authenticate()
+    assert client.get("/user/").json()["followers"][0]["id"] == user2_id
+
+    api_util.create_user2_and_authenticate()
+    client.put(f"/user/relationship/{user1_id}/unfollow/")
+    assert not len(client.get("/user/").json()["following"])
+
+    api_util.create_user_and_authenticate()
+    assert not len(client.get("/user/").json()["followers"])

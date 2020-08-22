@@ -2,6 +2,13 @@ from sqlalchemy import Column, ForeignKey, Integer, Table
 
 from app.database import Base
 
+user_following = Table(
+    "user_following",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("following_id", Integer, ForeignKey("users.id"), primary_key=True),
+)
+
 books_users = Table(
     "books_users",
     Base.metadata,
