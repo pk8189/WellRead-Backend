@@ -28,7 +28,9 @@ class MockApiRequests:
     def authenticate(
         self, email: str = DEFAULT_EMAIL, password: str = DEFAULT_PASSWORD
     ):
-        res = self.client.post("/token", data={"username": email, "password": password})
+        res = self.client.post(
+            "/api/token", data={"username": email, "password": password}
+        )
         token = res.json()["access_token"]
         return self.client.headers.update({"Authorization": f"Bearer {token}"})
 
@@ -44,54 +46,54 @@ class MockApiRequests:
         password=DEFAULT_PASSWORD,
     ):
         body = self.prep_kwargs(locals())
-        return self.client.post("/user/", json=body,)
+        return self.client.post("/api/user/", json=body,)
 
     def create_club(self, name="A merry club"):
         body = self.prep_kwargs(locals())
-        return self.client.post("/club/", json=body,)
+        return self.client.post("/api/club/", json=body,)
 
     def create_book(self, book_title="Book title", author_name="Chinua Acb"):
         body = self.prep_kwargs(locals())
-        return self.client.post("/book/", json=body,)
+        return self.client.post("/api/book/", json=body,)
 
     def create_note(
         self, content="Oh my, such a lovely note!", book_id=1, private=False
     ):
         body = self.prep_kwargs(locals())
-        return self.client.post("/note/", json=body,)
+        return self.client.post("/api/note/", json=body,)
 
     def update_note(
         self, note_id=1, content="A new type of note!", private=False, archived=False
     ):
         body = self.prep_kwargs(locals())
-        return self.client.put(f"/note/{note_id}/", json=body,)
+        return self.client.put(f"/api/note/{note_id}/", json=body,)
 
     def add_tags_to_note(
         self, note_id=1, tags=[1], club_tags=[2],
     ):
         body = self.prep_kwargs(locals())
-        return self.client.put(f"/note/{note_id}/tag/", json=body)
+        return self.client.put(f"/api/note/{note_id}/tag/", json=body)
 
     def create_tag(
         self, name="taggy boy",
     ):
         body = self.prep_kwargs(locals())
-        return self.client.post("/tag/", json=body)
+        return self.client.post("/api/tag/", json=body)
 
     def update_tag(
         self, name="a new tag name", tag_id=1, archived=False,
     ):
         body = self.prep_kwargs(locals())
-        return self.client.put(f"/tag/{tag_id}/", json=body)
+        return self.client.put(f"/api/tag/{tag_id}/", json=body)
 
     def create_club_tag(
         self, name="club taggy boy", book_id=1, club_id=1,
     ):
         body = self.prep_kwargs(locals())
-        return self.client.post("/club_tag/", json=body)
+        return self.client.post("/api/club_tag/", json=body)
 
     def update_club_tag(
         self, club_tag_id=1, name="a new clubtag name", archived=False,
     ):
         body = self.prep_kwargs(locals())
-        return self.client.put(f"/club_tag/{club_tag_id}/", json=body)
+        return self.client.put(f"/api/club_tag/{club_tag_id}/", json=body)

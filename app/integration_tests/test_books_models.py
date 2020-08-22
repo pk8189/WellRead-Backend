@@ -8,8 +8,8 @@ def test_create_books(client):
     book_id = api_util.create_book(book_title="Meat", author_name="Is good").json()[
         "id"
     ]
-    assert client.get(f"/book/{book_id}/").json()["book_title"] == "Meat"
-    assert client.get(f"/book/{book_id}/").json()["author_name"] == "Is good"
+    assert client.get(f"/api/book/{book_id}/").json()["book_title"] == "Meat"
+    assert client.get(f"/api/book/{book_id}/").json()["author_name"] == "Is good"
 
 
 def test_read_books(client):
@@ -17,8 +17,8 @@ def test_read_books(client):
     api_util.create_user_and_authenticate()
 
     api_util.create_book(book_title="test1", author_name="itsame")
-    assert client.get("/book/1/").json()["book_title"] == "test1"
-    assert client.get("/book/1/").json()["author_name"] == "itsame"
+    assert client.get("/api/book/1/").json()["book_title"] == "test1"
+    assert client.get("/api/book/1/").json()["author_name"] == "itsame"
 
 
 def test_add_and_remove_book_from_user(client):
@@ -27,10 +27,10 @@ def test_add_and_remove_book_from_user(client):
 
     book_id = api_util.create_book().json()["id"]
 
-    client.put(f"/user/book/{book_id}/add/")
-    assert len(client.get("/user/").json()["books"]) == 1
-    assert len(client.get(f"/book/{book_id}/").json()["users"]) == 1
+    client.put(f"/api/user/book/{book_id}/add/")
+    assert len(client.get("/api/user/").json()["books"]) == 1
+    assert len(client.get(f"/api/book/{book_id}/").json()["users"]) == 1
 
-    client.put(f"/user/book/{book_id}/remove/")
-    assert len(client.get("/user/").json()["books"]) == 0
-    assert len(client.get(f"/book/{book_id}/").json()["users"]) == 0
+    client.put(f"/api/user/book/{book_id}/remove/")
+    assert len(client.get("/api/user/").json()["books"]) == 0
+    assert len(client.get(f"/api/book/{book_id}/").json()["users"]) == 0

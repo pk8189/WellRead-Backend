@@ -20,8 +20,8 @@ def test_read_club_tag(client):
     api_util.create_club()
     api_util.create_club_tag(name="test getter")
 
-    assert client.get(f"/club_tag/1/").json()["name"] == "test getter"
-    assert client.get(f"/club_tag/2/").json()["detail"] == "ClubTag not found"
+    assert client.get(f"/api/club_tag/1/").json()["name"] == "test getter"
+    assert client.get(f"/api/club_tag/2/").json()["detail"] == "ClubTag not found"
 
 
 def test_read_club_tags(client):
@@ -32,17 +32,19 @@ def test_read_club_tags(client):
 
     api_util.create_club_tag(name="test getter")
     assert (
-        client.get(f"/club_tags/?club_id=1").json()["club_tags"][0]["name"]
+        client.get(f"/api/club_tags/?club_id=1").json()["club_tags"][0]["name"]
         == "test getter"
     )
 
     api_util.create_user2_and_authenticate()  # create/login as another user
-    assert client.get(f"/club_tags/?club_id=1").json()["detail"] == "ClubTag not found"
-    client.put(f"/club/1/join/")  # join the club
+    assert (
+        client.get(f"/api/club_tags/?club_id=1").json()["detail"] == "ClubTag not found"
+    )
+    client.put(f"/api/club/1/join/")  # join the club
 
     api_util.create_club_tag(name="test getter2")
     assert (
-        client.get(f"/club_tags/?club_id=1").json()["club_tags"][1]["name"]
+        client.get(f"/api/club_tags/?club_id=1").json()["club_tags"][1]["name"]
         == "test getter2"
     )
 
@@ -55,8 +57,8 @@ def test_update_club_tag_and_archived_functionality(client):
 
     api_util.create_club_tag(name="test create")
     api_util.update_club_tag(club_tag_id=1, name="test update", archived=True)
-    assert client.get(f"/club_tag/1/").json()["name"] == "test update"
-    assert client.get(f"/club_tag/1/").json()["archived"] == True
+    assert client.get(f"/api/club_tag/1/").json()["name"] == "test update"
+    assert client.get(f"/api/club_tag/1/").json()["archived"] == True
 
 
 def test_delete_club_tag(client):
@@ -66,10 +68,10 @@ def test_delete_club_tag(client):
     api_util.create_club()
 
     api_util.create_club_tag(name="test create")
-    client.delete("/club_tag/1/")
-    assert client.get("/club_tag/1/").json()["detail"] == "ClubTag not found"
+    client.delete("/api/club_tag/1/")
+    assert client.get("/api/club_tag/1/").json()["detail"] == "ClubTag not found"
 
     api_util.create_club_tag(name="test create")
     api_util.create_user2_and_authenticate()  # create/login as another user
     ### Fails because user is not admin
-    assert client.delete("/club_tag/1/").json()["detail"] == "ClubTag not found"
+    assert client.delete("/api/club_tag/1/").json()["detail"] == "ClubTag not found"

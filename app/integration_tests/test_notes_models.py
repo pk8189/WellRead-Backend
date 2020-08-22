@@ -20,7 +20,7 @@ def test_read_note(client):
     api_util.create_club()
 
     note_id = api_util.create_note(content="test content").json()["id"]
-    response = client.get(f"/note/{note_id}/")
+    response = client.get(f"/api/note/{note_id}/")
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["content"] == "test content"
@@ -64,14 +64,14 @@ def test_read_personal_notes(client):
         archived=True,
     )
 
-    private_not_archived = client.get(f"/notes/me/?book_id=1").json()
+    private_not_archived = client.get(f"/api/notes/me/?book_id=1").json()
     assert [note["content"] for note in private_not_archived["notes"]] == [
         "public_not_archived",
         "private_not_archived",
     ]
 
     public_including_archived_res = client.get(
-        f"/notes/me/?book_id=1&include_archived=True"
+        f"/api/notes/me/?book_id=1&include_archived=True"
     ).json()
     assert [note["content"] for note in public_including_archived_res["notes"]] == [
         "public_not_archived",
@@ -81,7 +81,7 @@ def test_read_personal_notes(client):
     ]
 
     public_not_including_archived_res = client.get(
-        f"/notes/me/?book_id=1&include_private=False&include_archived=True"
+        f"/api/notes/me/?book_id=1&include_private=False&include_archived=True"
     ).json()
     assert [note["content"] for note in public_not_including_archived_res["notes"]] == [
         "public_not_archived",
@@ -96,20 +96,20 @@ def test_add_tags_to_note(client):
     note_id = api_util.create_note(content="test1").json()["id"]
     tag_id = api_util.create_tag(name="testtag1").json()["id"]
 
-    client.put(f"/note/{note_id}/tag/", json={"tags": [tag_id], "club_tags": []})
-    get_notes = client.get(f"/note/{note_id}/").json()
+    client.put(f"/api/note/{note_id}/tag/", json={"tags": [tag_id], "club_tags": []})
+    get_notes = client.get(f"/api/note/{note_id}/").json()
     assert get_notes["tags"][0]["name"] == "testtag1"
 
-    get_tags = client.get(f"/tag/{tag_id}/").json()
+    get_tags = client.get(f"/api/tag/{tag_id}/").json()
     assert get_tags["name"] == "testtag1"
 
     invalid_tag_res = client.put(
-        f"/note/{note_id}/tag/", json={"tags": [100], "club_tags": []}
+        f"/api/note/{note_id}/tag/", json={"tags": [100], "club_tags": []}
     ).json()
     assert invalid_tag_res["detail"] == "Tag not found"
 
     invalid_note_res = client.put(
-        f"/note/100/tag/", json={"tags": [1], "club_tags": []}
+        f"/api/note/100/tag/", json={"tags": [1], "club_tags": []}
     ).json()
     assert invalid_note_res["detail"] == "Note not found"
 
@@ -120,16 +120,17 @@ def test_delete_notes(client):
 
     note_id = api_util.create_note(content="test1").json()["id"]
     tag_id = api_util.create_tag(name="testtag1").json()["id"]
-    client.put(f"/note/{note_id}/tag/", json={"tags": [tag_id], "club_tags": []})
+    client.put(f"/api/note/{note_id}/tag/", json={"tags": [tag_id], "club_tags": []})
 
-    client.delete(f"/note/{note_id}/")
-    assert client.get(f"/note/{note_id}/").json()["detail"] == "Note not found"
-    assert not client.get(f"/notes/club/?book_id=1").json().get("notes")
-    assert not client.get(f"/tag/{tag_id}/").json().get("notes")
+    client.delete(f"/api/note/{note_id}/")
+    assert client.get(f"/api/note/{note_id}/").json()["detail"] == "Note not found"
+    assert not client.get(f"/api/notes/club/?book_id=1").json().get("notes")
+    assert not client.get(f"/api/tag/{tag_id}/").json().get("notes")
 
     user_1_note_id = api_util.create_note(content="test delete").json()["id"]
 
     api_util.create_user2_and_authenticate()  # create/login as another user
     assert (
-        client.delete(f"/note/{user_1_note_id}/").json()["detail"] == "Note not found"
+        client.delete(f"/api/note/{user_1_note_id}/").json()["detail"]
+        == "Note not found"
     )

@@ -17,7 +17,7 @@ if PRODUCTION_DB == "postgres":
     SQLALCHEMY_DATABASE_URL = (
         f"postgres://{USER}:{PASSWORD}@{DB_HOST}:{DB_PORT}/wellread_db"
     )
-    engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
+    engine = create_engine(SQLALCHEMY_DATABASE_URL)
 else:
     SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
     engine = create_engine(
