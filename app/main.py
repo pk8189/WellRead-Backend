@@ -5,7 +5,15 @@ from fastapi import Depends, FastAPI
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from app import auth_utils, crud, dependencies, models, schemas
+from app import (
+    auth_utils,
+    crud,
+    dependencies,
+    google_books,
+    google_books_schemas,
+    models,
+    schemas,
+)
 from app.database import engine
 
 models.Base.metadata.create_all(bind=engine)
@@ -77,12 +85,34 @@ def unfollow_user(
 
 
 @app.post("/api/book/", response_model=schemas.Book)
-def create_book(
+def get_or_create_book(
     book: schemas.BookCreate,
     db: Session = Depends(dependencies.get_db),
     user: schemas.User = Depends(dependencies.get_current_user),
 ):
-    return crud.create_book(user.id, book, db)
+    """If the book already exists in the backend, add this user"""
+    return crud.get_or_create_book(user.id, book, db)
+
+
+@app.get("/api/book/google_books/{q}", response_model=google_books_schemas.Volumes)
+def query_google_books(
+    q: str, user: schemas.User = Depends(dependencies.get_current_user),
+):
+    assert user.id
+    return google_books_schemas.Volumes(volumes=google_books.query_google_books(q))
+
+
+@app.get(
+    "/api/book/{book_id}/google_book/", response_model=google_books_schemas.VolumeRes
+)
+def get_google_book_data(
+    book_id: str,
+    db: Session = Depends(dependencies.get_db),
+    user: schemas.User = Depends(dependencies.get_current_user),
+):
+    assert user.id
+    db_book = crud.read_book(user.id, book_id, db)
+    return google_books.get_google_book(db_book.google_books_id)
 
 
 @app.get("/api/book/{book_id}/", response_model=schemas.Book)

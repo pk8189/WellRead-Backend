@@ -79,8 +79,16 @@ def unfollow_user(follower_id: int, following_id: int, db: Session) -> schemas.U
 
 
 # Book CREATE
-def create_book(used_id: int, book: schemas.BookCreate, db: Session) -> schemas.Book:
-    db_book = models.Book(**book.dict())
+def get_or_create_book(
+    used_id: int, book: schemas.BookCreate, db: Session
+) -> schemas.Book:
+    db_book = (
+        db.query(models.Book)
+        .filter(models.Book.google_books_id == book.google_books_id)
+        .first()
+    )
+    if not db_book:
+        db_book = models.Book(**book.dict())
     db_user = db.query(models.User).filter(models.User.id == used_id).first()
     db.add(db_book)
     db_book.users.append(db_user)

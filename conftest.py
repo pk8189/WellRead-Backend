@@ -47,7 +47,7 @@ def db_session(_app: FastAPI) -> Generator[Session, Any, None]:
     # bind an individual Session to the connection
     session = Session(bind=connection)
     yield session  # use the session in tests.
-    session.close()  # pylint: disable=no-member
+    session.close()
     # rollback - everything that happened with the
     # Session above (including calls to commit())
     # is rolled back.

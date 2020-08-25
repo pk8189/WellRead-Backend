@@ -43,8 +43,8 @@ class Book(Base, WellReadBase):
     __tablename__ = "books"
 
     id = Column(Integer, primary_key=True, index=True)
-    book_title = Column(String, nullable=False)
-    author_name = Column(String, nullable=False)
+    google_books_id = Column(String, nullable=False)
+    google_books_self_link = Column(String, nullable=False)
 
     tags = relationship(
         "Tag", back_populates="books", secondary=associations.books_tags

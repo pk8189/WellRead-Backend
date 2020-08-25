@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel  # pylint: disable=no-name-in-module
+from pydantic import BaseModel
 
 
 class Token(BaseModel):
@@ -23,8 +23,8 @@ class UserBase(BaseModel):
 
 class BookBase(BaseModel):
     id: int
-    book_title: str
-    author_name: str
+    google_books_id: str
+    google_books_self_link: str
 
     class Config:
         orm_mode = True
@@ -112,14 +112,8 @@ class Book(BookBase):
 
 
 class BookCreate(BaseModel):
-    book_title: str
-    author_name: str
-
-
-class BookUpdate(BaseModel):
-    book_title: Optional[str] = None
-    author_name: Optional[str] = None
-    archived: Optional[bool] = None
+    google_books_id: str
+    google_books_self_link: str
 
 
 class BookDelete(BookBase):

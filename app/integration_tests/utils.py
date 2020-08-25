@@ -52,7 +52,11 @@ class MockApiRequests:
         body = self.prep_kwargs(locals())
         return self.client.post("/api/club/", json=body,)
 
-    def create_book(self, book_title="Book title", author_name="Chinua Acb"):
+    def create_book(
+        self,
+        google_books_id="asfk124124",
+        google_books_self_link="https://book.google.com/asfk124124",
+    ):
         body = self.prep_kwargs(locals())
         return self.client.post("/api/book/", json=body,)
 
