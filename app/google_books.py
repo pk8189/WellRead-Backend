@@ -7,7 +7,7 @@ BASE_URL = "https://www.googleapis.com/books/v1/volumes"
 def query_google_books(query_string: str) -> list:
     res = requests.get(f"{BASE_URL}?q={query_string}&projection=full")
     if res.status_code == 200:
-        results = res.json()["items"]
+        results = res.json().get("items", [])
         if len(results) > 15:
             return results[:15]
         return results[: len(results)]

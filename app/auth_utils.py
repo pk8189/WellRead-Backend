@@ -8,7 +8,7 @@ from passlib.context import CryptContext
 
 from app import crud, schemas
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/token")
 SECRET_KEY = "e517ac31634c05925e708e630a2feb87516c68309d2b5b763339c22a76ce3845"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 120
