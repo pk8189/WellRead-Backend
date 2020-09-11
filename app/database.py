@@ -5,23 +5,26 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+from app.logging import logger
+
 load_dotenv()
 
-PRODUCTION_DB = getenv("PRODUCTION_DB")
 USER = getenv("DB_USERNAME")
 PASSWORD = getenv("DB_PASSWORD")
 DB_HOST = getenv("DB_HOST")
 DB_PORT = getenv("DB_PORT")
 
-if PRODUCTION_DB == "postgres":
+if USER and PASSWORD and DB_HOST and DB_PORT:
     SQLALCHEMY_DATABASE_URL = (
         f"postgres://{USER}:{PASSWORD}@{DB_HOST}:{DB_PORT}/wellread_db"
     )
+    logger.info(f"Using Postgres as DB at {SQLALCHEMY_DATABASE_URL}")
     engine = create_engine(SQLALCHEMY_DATABASE_URL)
 else:
+    logger.info("Using SQLLite as DB")
     SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
     engine = create_engine(
-        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, echo=True
+        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
     )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

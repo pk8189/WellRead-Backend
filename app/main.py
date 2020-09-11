@@ -1,4 +1,7 @@
 from datetime import timedelta
+from random import choices
+from string import ascii_uppercase, digits
+from time import time
 from typing import Optional
 
 from fastapi import Depends, FastAPI
@@ -15,10 +18,32 @@ from app import (
     schemas,
 )
 from app.database import engine
+from app.logging import logger
 
+# create DB
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(debug=True)
+
+# init the application
+app = FastAPI(debug=engine.name == "sqlite")
+
+
+# Log all HTTP requests
+@app.middleware("http")
+async def log_requests(request, call_next):
+    idem = "".join(choices(ascii_uppercase + digits, k=6))
+    logger.info(f"request_id={idem} start request path={request.url.path}")
+    start_time = time()
+
+    response = await call_next(request)
+    breakpoint()
+    process_time = (time() - start_time) * 1000
+    formatted_process_time = "{0:.2f}".format(process_time)
+    logger.info(
+        f"rid={idem} completed_in={formatted_process_time}ms status_code={response.status_code}"
+    )
+
+    return response
 
 
 @app.post("/api/token", response_model=schemas.Token)

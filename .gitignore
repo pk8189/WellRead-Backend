@@ -12,3 +12,5 @@ test.db
 # .env file for database settings
 .env
 
+logs/*
+!logs/.gitkeep 
