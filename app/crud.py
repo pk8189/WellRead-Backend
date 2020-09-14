@@ -316,6 +316,36 @@ def add_tags_to_note(
     return db_note
 
 
+# Note UPDATE
+def remove_tags_from_note(
+    user_id: int, note_id: int, tags: schemas.NoteAddTagsAndClubTags, db: Session
+) -> schemas.Note:
+    db_note = (
+        db.query(models.Note)
+        .filter(models.Note.id == note_id)
+        .filter(models.Note.user_id == user_id)
+        .first()
+    )
+    if not db_note:
+        raise HTTPException(status_code=400, detail="Note not found")
+    for tag_id in tags.tags:
+        db_tag = db.query(models.Tag).filter(models.Tag.id == tag_id).first()
+        if not db_tag:
+            raise HTTPException(status_code=400, detail="Tag not found")
+        db_note.tags.remove(db_tag)
+    for club_tag_id in tags.club_tags:
+        db_club_tag = (
+            db.query(models.ClubTag).filter(models.ClubTag.id == club_tag_id).first()
+        )
+        if not db_club_tag:
+            raise HTTPException(status_code=400, detail="ClubTag not found")
+        db_note.club_tags.remove(db_club_tag)
+    db.add(db_note)
+    db.commit()
+    db.refresh(db_note)
+    return db_note
+
+
 # Note DELETE
 def delete_note(user_id: int, note_id: int, db: Session) -> schemas.Note:
     db_note = (

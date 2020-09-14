@@ -96,7 +96,9 @@ def test_add_tags_to_note(client):
     note_id = api_util.create_note(content="test1").json()["id"]
     tag_id = api_util.create_tag(name="testtag1").json()["id"]
 
-    client.put(f"/api/note/{note_id}/tag/", json={"tags": [tag_id], "club_tags": []})
+    client.put(
+        f"/api/note/{note_id}/tag/add/", json={"tags": [tag_id], "club_tags": []}
+    )
     get_notes = client.get(f"/api/note/{note_id}/").json()
     assert get_notes["tags"][0]["name"] == "testtag1"
 
@@ -104,14 +106,29 @@ def test_add_tags_to_note(client):
     assert get_tags["name"] == "testtag1"
 
     invalid_tag_res = client.put(
-        f"/api/note/{note_id}/tag/", json={"tags": [100], "club_tags": []}
+        f"/api/note/{note_id}/tag/add/", json={"tags": [100], "club_tags": []}
     ).json()
     assert invalid_tag_res["detail"] == "Tag not found"
 
     invalid_note_res = client.put(
         f"/api/note/100/tag/", json={"tags": [1], "club_tags": []}
     ).json()
-    assert invalid_note_res["detail"] == "Note not found"
+    assert invalid_note_res["detail"] == "Not Found"
+
+
+def test_remove_tags_from_note(client):
+    api_util = utils.MockApiRequests(client)
+    api_util.create_user_and_authenticate()
+
+    note_id = api_util.create_note(content="test1").json()["id"]
+    tag_id = api_util.create_tag(name="testtag1").json()["id"]
+    client.put(
+        f"/api/note/{note_id}/tag/add/", json={"tags": [tag_id], "club_tags": []}
+    )
+    client.put(
+        f"/api/note/{note_id}/tag/remove/", json={"tags": [tag_id], "club_tags": []}
+    )
+    assert not len(client.get(f"/api/note/{note_id}/").json()["tags"])
 
 
 def test_delete_notes(client):
@@ -120,7 +137,9 @@ def test_delete_notes(client):
 
     note_id = api_util.create_note(content="test1").json()["id"]
     tag_id = api_util.create_tag(name="testtag1").json()["id"]
-    client.put(f"/api/note/{note_id}/tag/", json={"tags": [tag_id], "club_tags": []})
+    client.put(
+        f"/api/note/{note_id}/tag/add/", json={"tags": [tag_id], "club_tags": []}
+    )
 
     client.delete(f"/api/note/{note_id}/")
     assert client.get(f"/api/note/{note_id}/").json()["detail"] == "Note not found"

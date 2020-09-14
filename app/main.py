@@ -34,9 +34,7 @@ async def log_requests(request, call_next):
     idem = "".join(choices(ascii_uppercase + digits, k=6))
     logger.info(f"request_id={idem} start request path={request.url.path}")
     start_time = time()
-
     response = await call_next(request)
-    breakpoint()
     process_time = (time() - start_time) * 1000
     formatted_process_time = "{0:.2f}".format(process_time)
     logger.info(
@@ -272,7 +270,7 @@ def update_note(
     return crud.update_note(user.id, note_id, note, db)
 
 
-@app.put("/api/note/{note_id}/tag/", response_model=schemas.Note)
+@app.put("/api/note/{note_id}/tag/add/", response_model=schemas.Note)
 def add_tags_to_notes(
     note_id: int,
     tags: schemas.NoteAddTagsAndClubTags,
@@ -280,6 +278,16 @@ def add_tags_to_notes(
     user: schemas.User = Depends(dependencies.get_current_user),
 ):
     return crud.add_tags_to_note(user.id, note_id, tags, db)
+
+
+@app.put("/api/note/{note_id}/tag/remove/", response_model=schemas.Note)
+def add_tags_to_notes(
+    note_id: int,
+    tags: schemas.NoteAddTagsAndClubTags,
+    db: Session = Depends(dependencies.get_db),
+    user: schemas.User = Depends(dependencies.get_current_user),
+):
+    return crud.remove_tags_from_note(user.id, note_id, tags, db)
 
 
 @app.delete("/api/note/{note_id}/", response_model=schemas.NoteDelete)

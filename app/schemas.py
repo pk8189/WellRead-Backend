@@ -83,15 +83,6 @@ class UserFollow(BaseModel):
     full_name: str
 
 
-class User(UserBase):
-    books: List[BookBase]
-    tags: List[TagBase]
-    clubs: List[ClubBase]
-    notes: List[NoteBase]
-    following: List[UserBase]
-    followers: List[UserBase]
-
-
 class DBUser(UserBase):
     hashed_password: str
 
@@ -166,6 +157,7 @@ class NoteUpdate(BaseModel):
     content: str
     private: Optional[bool]
     archived: Optional[bool]
+    book_id: Optional[int]
 
 
 class NoteAddTagsAndClubTags(BaseModel):
@@ -221,3 +213,12 @@ class ClubTagUpdate(BaseModel):
 
 class ClubTagDelete(ClubTagBase):
     pass
+
+
+class User(UserBase):
+    books: List[Book]
+    tags: List[Tag]
+    clubs: List[Club]
+    notes: List[Note]
+    following: List[UserBase]
+    followers: List[UserBase]
