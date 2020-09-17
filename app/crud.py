@@ -363,6 +363,16 @@ def delete_note(user_id: int, note_id: int, db: Session) -> schemas.Note:
 
 # Tag CREATE
 def create_tag(user_id: int, tag: schemas.TagCreate, db: Session) -> schemas.Tag:
+    db_tag = (
+        db.query(models.Tag)
+        .filter(models.Tag.user_id == user_id)
+        .filter(models.Tag.name == tag.name)
+        .first()
+    )
+    if db_tag:
+        raise HTTPException(
+            status_code=400, detail=f"Tag with name {tag.name} already exists"
+        )
     tag_dict = tag.dict()
     tag_dict["user_id"] = user_id
     db_tag = models.Tag(**tag_dict)

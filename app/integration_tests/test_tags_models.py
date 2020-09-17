@@ -5,10 +5,16 @@ def test_create_tag(client):
     api_util = utils.MockApiRequests(client)
     api_util.create_user_and_authenticate()
 
-    response = api_util.create_tag(name="a new tag name")
+    tag_name = "a new tag name"
+    response = api_util.create_tag(name=tag_name)
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["name"] == "a new tag name"
+
+    assert (
+        api_util.create_tag(name="a new tag name").json()["detail"]
+        == f"Tag with name {tag_name} already exists"
+    )
 
 
 def test_read_tag(client):
